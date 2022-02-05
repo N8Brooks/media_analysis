@@ -5,8 +5,22 @@
   "editor.defaultFormatter": "denoland.vscode-deno",
   "editor.formatOnSave": true,
   "cSpell.words": [
+    "bigrams",
     "deno",
+    "dtype",
+    "hashingvectorizer",
+    "ngram",
+    "ngrams",
+    "numpy",
+    "quantile",
+    "quantiles",
+    "scikit",
+    "sklearn",
     "testdata",
-    "vectorize"
+    "TFIDF",
+    "tokenizes",
+    "vectorize",
+    "vectorizer",
+    "vectorizers"
   ]
 }
