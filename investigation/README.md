@@ -132,7 +132,7 @@ to improve accuracy. My hypothesis for this is that it was performing some sort
 of naive dimensionality reduction. Since this could have unexpected results on
 different applications of the model this was not taken advantage of.
 
-![Hashing collisions visual](images/collisions.png)
+![Hashing collisions visual](images/hashing_collisions.png)
 
 ## Hashing Vectorizer - binary
 
