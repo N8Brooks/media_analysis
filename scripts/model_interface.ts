@@ -1,7 +1,7 @@
 /** This is just to test out the model on various texts */
 
-import * as classifier from "./binary_classifier.ts";
-import { N_FEATURES, vectorize } from "./vectorize.ts";
+import * as classifier from "../binary_classifier.ts";
+import { N_FEATURES, vectorize } from "../vectorize.ts";
 
 // TODO: Not sure why the .., 0, N_FEATURES) is required
 

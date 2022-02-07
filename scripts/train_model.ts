@@ -1,7 +1,7 @@
-import * as classifier from "./binary_classifier.ts";
-import { parse } from "./deps.ts";
-import { displayMetrics } from "./display_metrics.ts";
-import { loadData } from "./load_data.ts";
+import * as classifier from "../binary_classifier.ts";
+import { parse } from "../deps.ts";
+import { displayMetrics } from "../display_metrics.ts";
+import { loadData } from "../load_data.ts";
 
 const {
   /** Whether the model will be saved to disk */
