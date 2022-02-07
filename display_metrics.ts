@@ -43,7 +43,7 @@ const computeSensitivityAndSpecificity = (
   };
 };
 
-/** Returns an object organizing sensitivity and specificity */
+/** Returns an object organizing sensitivity and specificity*/
 const confusionMatrix = ({
   truePositives,
   trueNegatives,

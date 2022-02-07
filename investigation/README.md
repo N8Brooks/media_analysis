@@ -23,10 +23,7 @@ implementation, and ability to optimize
 [stochastic gradient descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent)
 would work well for the implementation. This also fits the additional criteria
 for creating an
-[online algorithm](https://en.wikipedia.org/wiki/Online_algorithm). The
-precision metric of accuracy was the most important for evaluating models. When
-considering a document as potentially biased I'd prefer false negatives over
-false positives.
+[online algorithm](https://en.wikipedia.org/wiki/Online_algorithm).
 
 ## Model Architecture
 
