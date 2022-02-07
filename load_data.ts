@@ -6,9 +6,10 @@ import { Sample } from "./sample.ts";
 type Row = Record<string, string>;
 
 /** Parses a record from the dataset */
-const parseRecord = (
-  { question, text, target }: Record<string, string>,
-): Sample => {
+export const parseRecord = ({ question, text, target }: Row): Sample => {
+  if (target !== "-1" && target !== "1") {
+    throw new RangeError(`Target ${target} is not -1 or 1`);
+  }
   return {
     x: vectorize(text),
     y: +target as -1 | 1,
@@ -17,12 +18,12 @@ const parseRecord = (
 };
 
 /** Returns a unique identifier for the `y`-`question` pair */
-const getPseudoClass = ({ y, weight: question }: Sample): string => {
+export const getPseudoClass = ({ y, weight: question }: Sample): string => {
   return `${y},${question}`;
 };
 
 /** Balances classes among combinations of `question` and `y` in-place */
-const balanceClasses = (data: Sample[]) => {
+export const balanceClasses = (data: Sample[]): Sample[] => {
   const binCounts: Map<string, number> = new Map();
   data.forEach((datum) => {
     const pseudoClass = getPseudoClass(datum);
@@ -40,13 +41,14 @@ const balanceClasses = (data: Sample[]) => {
     const pseudoClass = getPseudoClass(datum);
     datum.weight = weights[pseudoClass];
   });
+  return data;
 };
 
 /** Parses a given dataset file and returns */
 export const loadData = async (filename: string): Promise<Sample[]> => {
   const text = await Deno.readTextFile(filename);
   const csv = await CSV.parse(text, { skipFirstRow: true }) as Row[];
-  const data = csv.map((record) => parseRecord(record));
-  balanceClasses(data);
-  return data;
+  const data = csv.map((record) => parseRecord(record)); // Weight is actually question
+  const samples = balanceClasses(data); // Re-named to show weight is now weight
+  return samples;
 };
