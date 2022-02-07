@@ -179,12 +179,11 @@ class PoliticalCompass extends HTMLElement {
       return;
     }
 
-    console.log(texts.length);
-
     // Show default ellipse shape
     if (texts.length === 0) {
-      this.setConfidenceRegion80();
       this.setConfidenceRegion95();
+      this.setConfidenceRegion80();
+      this.setPoint();
       return;
     }
 
