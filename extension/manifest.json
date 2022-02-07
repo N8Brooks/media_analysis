@@ -1,0 +1,13 @@
+{
+  "name": "Media Analysis",
+  "description": "Machine learning model that ranks sites on the political compass.",
+  "version": "0.0.0",
+  "manifest_version": 3,
+  "permissions": [
+    "scripting",
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
