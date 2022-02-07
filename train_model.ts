@@ -1,5 +1,5 @@
 import * as classifier from "./binary_classifier.ts";
-import { log, parse } from "./deps.ts";
+import { parse } from "./deps.ts";
 import { displayMetrics } from "./display_metrics.ts";
 import { loadData } from "./load_data.ts";
 
@@ -14,7 +14,7 @@ const {
 const axis = _[0];
 
 if (axis !== "society" && axis != "economy") {
-  log.error("Axis arg must be either 'economy' or 'society'");
+  console.error("Axis arg must be either 'economy' or 'society'");
   Deno.exit(0);
 }
 
@@ -29,7 +29,7 @@ displayMetrics(test, weights);
 
 // Save model
 if (w) {
-  log.info("Saving model");
+  console.info("Saving model");
   const model = new Uint8Array(weights.buffer);
   await Deno.writeFile(`models/${axis}_model.bin`, model);
 }

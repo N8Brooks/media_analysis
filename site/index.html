@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Political Compass</title>
+  </head>
+  <style>
+    body {
+      display: grid;
+      text-align: center;
+      grid-template-columns:
+        [viewport-start] minmax(1em, 1fr)
+        [container-start] minmax(0, 30em)
+        [container-end] minmax(1em, 1fr)
+        [viewport-end];
+    }
+    .content {
+      grid-column: container;
+    }
+    textarea {
+      width: 100%;
+      height: 250px;
+    }
+  </style>
+  <body>
+    <div class=content>
+      <political-compass></political-compass>
+      <textarea></textarea>
+      <button>Evaluate</button>
+    </div>
+  </body>
+  <script src="political_compass.js"></script>
+  <script>
+    // Select compass custom html element and fetch weights
+    const politicalCompass = document.querySelector('political-compass');
+    fetch("../models/society_model.bin")
+      .then((response) => response.arrayBuffer())
+      .then((array) => {
+        politicalCompass.societyWeights = new Float32Array(array);
+      });
+    fetch("../models/economy_model.bin")
+      .then((response) => response.arrayBuffer())
+      .then((array) => {
+        politicalCompass.economyWeights = new Float32Array(array);
+      });
+
+    // Add event listener for when text is submitted
+    const politicalText = document.querySelector('textarea');
+    document
+      .querySelector("button")
+      .addEventListener("click", (event) => {
+        event.preventDefault();
+        const texts = politicalText.value.split('\n\n');
+        politicalCompass.computeConfidenceRegion(texts)
+      });
+  </script>
+</html>

@@ -1,5 +1,4 @@
 import * as classifier from "./binary_classifier.ts";
-import { log } from "./deps.ts";
 import { Sample } from "./sample.ts";
 
 /** Used for metrics */
@@ -32,7 +31,7 @@ const computeSensitivityAndSpecificity = (
     } else if (yTrue === -1 && yPred === 1) {
       falseNegatives++;
     } else {
-      log.warning(`Encountered an invalid  yTrue=${yTrue} and yPred=${yPred}`);
+      console.warn(`Encountered an invalid  yTrue=${yTrue} and yPred=${yPred}`);
     }
   });
 

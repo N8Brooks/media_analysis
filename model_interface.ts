@@ -1,3 +1,5 @@
+/** This is just to test out the model on various texts */
+
 import * as classifier from "./binary_classifier.ts";
 import { N_FEATURES, vectorize } from "./vectorize.ts";
 
