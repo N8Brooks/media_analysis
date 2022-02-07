@@ -1,4 +1,4 @@
-# investigation
+# Investigation
 
 Details involving the selection of model architecture and values of
 hyper-parameters.

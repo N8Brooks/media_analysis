@@ -1,4 +1,4 @@
-# scripts
+# Scripts
 
 A collection of scripts for working with the binary classifier.
 
