@@ -27,3 +27,11 @@ be run with the Deno cli.
 
 The main project that includes preprocessing, vectorization, predicting, and a
 web component for the political compass ui.
+
+## Site
+
+A small webpage which allows classifying text on the political compass.
+
+## Extension
+
+An unpacked chrome extension for classifying pages on the political compass.
