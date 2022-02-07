@@ -3,7 +3,7 @@ export * from "https://deno.land/std@0.123.0/testing/asserts.ts";
 /** Largest 32 bit unsigned integer */
 const MAX_32_BIT_INT = 2 ** 32;
 
-/**  */
+/** The current random number generator state */
 let t = 0;
 
 /** Provides an initial seed for `Math.random` */

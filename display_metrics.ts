@@ -2,7 +2,7 @@ import * as classifier from "./binary_classifier.ts";
 import { Sample } from "./sample.ts";
 
 /** Used for metrics */
-interface SensitivityAndSpecificity {
+export interface SensitivityAndSpecificity {
   truePositives: number;
   trueNegatives: number;
   falsePositives: number;
@@ -10,7 +10,7 @@ interface SensitivityAndSpecificity {
 }
 
 /** Calculates sensitivity and specificity counts */
-const computeSensitivityAndSpecificity = (
+export const computeSensitivityAndSpecificity = (
   samples: Sample[],
   weights: Float32Array,
 ): SensitivityAndSpecificity => {
@@ -44,7 +44,7 @@ const computeSensitivityAndSpecificity = (
 };
 
 /** Returns an object organizing sensitivity and specificity*/
-const confusionMatrix = ({
+export const confusionMatrix = ({
   truePositives,
   trueNegatives,
   falsePositives,
@@ -63,7 +63,7 @@ const confusionMatrix = ({
 };
 
 /** Returns an object with various metrics */
-const assortedMetrics = ({
+export const assortedMetrics = ({
   truePositives,
   trueNegatives,
   falsePositives,
