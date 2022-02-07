@@ -271,7 +271,7 @@ this experiment. The script used to generate this visual is provided as
 It takes about a minute to run.
 
 Although the TFIDF feature vectors used for the SVM are theoretically better
-than the hashing vectors used for the ASGD model, the appeared to scale worse
+than the hashing vectors used for the ASGD model, they appeared to scale worse
 for when more samples were used. This is shown by the training score decreasing
 more rapidly than for the ASGD model. The above guide says this is due to the
 complex nature of the dataset which is understandable given its textual nature.
