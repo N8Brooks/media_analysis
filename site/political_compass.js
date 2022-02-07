@@ -371,13 +371,13 @@ class PoliticalCompass extends HTMLElement {
         }).append(style, svg);
     }
     set societyWeights(societyWeights) {
-        if (societyWeights) {
+        if (this.#societyWeights) {
             console.warn("Society weights should only be set once");
         }
         this.#societyWeights = societyWeights;
     }
     set economyWeights(economyWeights) {
-        if (economyWeights) {
+        if (this.#economyWeights) {
             console.warn("Economy weights should only be set once");
         }
         this.#economyWeights = economyWeights;

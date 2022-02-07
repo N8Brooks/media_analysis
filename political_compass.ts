@@ -132,7 +132,7 @@ class PoliticalCompass extends HTMLElement {
 
   /** Used to add society weights asynchronously */
   set societyWeights(societyWeights: Float32Array) {
-    if (societyWeights) {
+    if (this.#societyWeights) {
       console.warn("Society weights should only be set once");
     }
     this.#societyWeights = societyWeights;
@@ -140,7 +140,7 @@ class PoliticalCompass extends HTMLElement {
 
   /** Used to add economy weights asynchronously */
   set economyWeights(economyWeights: Float32Array) {
-    if (economyWeights) {
+    if (this.#economyWeights) {
       console.warn("Economy weights should only be set once");
     }
     this.#economyWeights = economyWeights;
