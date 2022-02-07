@@ -1,22 +1,27 @@
 import { assertEquals, assertStrictEquals } from "./test_deps.ts";
 import { hash } from "./hash.ts";
-import { N_FEATURES, preprocess, stripAccents, vectorize } from "./vectorize.ts";
+import {
+  N_FEATURES,
+  preprocess,
+  stripAccents,
+  vectorize,
+} from "./vectorize.ts";
 
 /** Several accent unique and accent redundant letters */
-const ACCENTUATED = 'àßÇÐéFgîõü'
+const ACCENTUATED = "àßÇÐéFgîõü";
 
 /** Words without collisions for `N_FEATURES` */
 const WORDS = ["lorem", "ipsum", "dolor", "sit", "amet"];
 
-Deno.test('accents', () => {
+Deno.test("accents", () => {
   const actual = stripAccents(ACCENTUATED);
-  const expected = 'aßCÐeFgiou';
+  const expected = "aßCÐeFgiou";
   assertStrictEquals(actual, expected);
 });
 
-Deno.test('preprocess', () => {
+Deno.test("preprocess", () => {
   const actual = preprocess(ACCENTUATED);
-  const expected = 'aßcðefgiou';
+  const expected = "aßcðefgiou";
   assertStrictEquals(actual, expected);
 });
 

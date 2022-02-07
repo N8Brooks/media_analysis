@@ -39,10 +39,10 @@ const T_DISTRIBUTION_TABLE = [
 ];
 
 /** Return the t distribution value for `degreesOfFreedom` */
-const tLookup = (degreesOfFreedom: number) => {
+export const tLookup = (degreesOfFreedom: number) => {
   // Leftmost binary search
   let l = 0;
-  let r = T_DISTRIBUTION_TABLE.length;
+  let r = T_DISTRIBUTION_TABLE.length - 1;
   while (l < r) {
     const m = Math.floor((l + r) / 2);
     const index = T_DISTRIBUTION_TABLE[m].i;
@@ -61,6 +61,9 @@ export const mean = (samples: number[]): number => {
 
 /** Standard deviation for a sample */
 export const std = (samples: number[]) => {
+  if (samples.length < 2) {
+    throw new RangeError("Must be given at least 2 samples");
+  }
   const sampleMean = mean(samples);
   const sumSquaredError = samples.reduce((sum, sample) => {
     const error = sample - sampleMean;
