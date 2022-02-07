@@ -13,22 +13,22 @@ const TOLERANCE = 1e-8;
 
 /** The average loss messages from fitting */
 const EXPECTED_LOGS = [
-  "Epoch 0, Avg. loss: 1",
-  "Epoch 1, Avg. loss: 0.9880359994811624",
-  "Epoch 2, Avg. loss: 0.9762151368768758",
-  "Epoch 3, Avg. loss: 0.9645357000068676",
-  "Epoch 4, Avg. loss: 0.9529959946411285",
-  "Epoch 5, Avg. loss: 0.94159435112378",
-  "Epoch 6, Avg. loss: 0.9303291145845783",
-  "Epoch 7, Avg. loss: 0.9191986555849092",
-  "Epoch 8, Avg. loss: 0.9082013617390133",
-  "Epoch 9, Avg. loss: 0.8973356375680224",
-  "Epoch 10, Avg. loss: 0.8865999148780098",
-  "Epoch 11, Avg. loss: 0.8759926366100932",
-  "Epoch 12, Avg. loss: 0.865512262056411",
-  "Epoch 13, Avg. loss: 0.8551572770543844",
-  "Epoch 14, Avg. loss: 0.8449261729912455",
-  "Epoch 15, Avg. loss: 0.8348174776106833",
+  "Epoch 0 - Average loss: 1.0000",
+  "Epoch 1 - Average loss: 0.9880",
+  "Epoch 2 - Average loss: 0.9762",
+  "Epoch 3 - Average loss: 0.9645",
+  "Epoch 4 - Average loss: 0.9530",
+  "Epoch 5 - Average loss: 0.9416",
+  "Epoch 6 - Average loss: 0.9303",
+  "Epoch 7 - Average loss: 0.9192",
+  "Epoch 8 - Average loss: 0.9082",
+  "Epoch 9 - Average loss: 0.8973",
+  "Epoch 10 - Average loss: 0.8866",
+  "Epoch 11 - Average loss: 0.8760",
+  "Epoch 12 - Average loss: 0.8655",
+  "Epoch 13 - Average loss: 0.8552",
+  "Epoch 14 - Average loss: 0.8449",
+  "Epoch 15 - Average loss: 0.8348",
 ];
 
 /** First 10 expected classifier weights */

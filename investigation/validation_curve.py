@@ -47,6 +47,7 @@ sgdclassifier = SGDClassifier(
     average=True,
     eta0=1e-5,
     tol=1e-4,
+    verbose=2,
 )
 
 pipeline = make_pipeline(hashingvectorizer, sgdclassifier)

@@ -70,7 +70,8 @@ export const fit = (samples: Sample[]): Float32Array => {
       tau += rateOfAveraging * beta / alpha;
     }
 
-    console.log(`Epoch ${epoch}, Avg. loss: ${sumLoss / samples.length}`);
+    const averageLoss = (sumLoss / samples.length).toFixed(4);
+    console.log(`Epoch ${epoch} - Average loss: ${averageLoss}`);
   }
 
   return u.map((weight, i) => (tau * weight + uHat[i]) / beta);
