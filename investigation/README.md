@@ -18,7 +18,7 @@ I opted for a probabilistic classifier instead of a regression for ease of
 implementation and the ability to weight samples more easily. Since there are
 two axes, two models are required: one for the society axis and one for the
 economic axis. Since the goal is to be distributed through the web, both models
-together should be less than approximately 5MB. For speed and ease, ease of
+together should be less than approximately 5MB. For speed, ease of
 implementation, and ability to optimize
 [stochastic gradient descent](https://en.wikipedia.org/wiki/Stochastic_gradient_descent)
 would work well for the implementation. This also fits the additional criteria
@@ -38,7 +38,7 @@ vectorizer for both its speed and minimal size given that individual tokens do
 not have to be stored. The TFIDF transformer was discarded because it would
 require an additional vector or two to be sent to the client containing the
 document frequencies depending on if it was fit on each dataset together or
-separately. The count vectorizer and TFIDF transformer were able to improve
+individually. The count vectorizer and TFIDF transformer were able to improve
 accuracy, however, it didn't seem worthwhile compared to its cost of
 implementation, speed, and size. An additional bonus of using the hashing
 vectorizer is that there is no need to consider fitting two vectorizers - one
@@ -57,8 +57,8 @@ hyper-parameters are included in this directory. Some notes are shared below.
 Stripping accents was able to barely reduce the amount of unique tokens for the
 dataset. Since this seemed to remove negligible information from the feature
 vectors it was used. There is also the possibility that an accentuated word was
-used in place of a non-accentuated word. In this case colliding the two words
-for the model would be beneficial.
+used in place of a non-accentuated word. In this case treating the two words as
+the same would be beneficial.
 
 ## Hashing Vectorizer - lowercase
 
@@ -67,7 +67,7 @@ amount of unique tokens more than stripping accents. Because casing did not seem
 to include very much information it was removed. Although it could increase
 accuracy, there is the possibility that leaving casing as is would cause the
 model to not recognize a token it has seen before. This is especially important
-given the limited size of the dataset.
+given the limited size of the datasets.
 
 ## Hashing Vectorizer - stop_words
 
@@ -76,7 +76,8 @@ unique tokens for bigrams and trigrams. Since I opted to use monograms I did not
 use any stop words. This would have also added quite a bit of hard coded
 JavaScript in the end model which was nice to avoid. There is also the widely
 held opinion that the `"english"` stop words provided by default in scikit-learn
-is too broad which could remove necessary information from the feature vectors.
+package is too broad which could remove necessary information from the feature
+vectors.
 
 ## Hashing Vectorizer - token_pattern
 
@@ -149,9 +150,8 @@ scikit-learn was assumed to be from noise.
 
 ## Hashing Vectorizer - alternate_sign
 
-Although hypothetically useful, alternate sign did not appear to provide a
-tangible increase in accuracy. Since this would make implementation more complex
-it was not used.
+Alternate sign did not appear to provide a tangible increase in accuracy. Since
+this would make implementation more complex it was not used.
 
 ## Hashing Vectorizer - dtype
 
@@ -230,7 +230,7 @@ mentions that higher values for the initial learning rate did well with average
 stochastic gradient descent. This seemed to be somewhat true with this data set
 as well. The very high values didn't seem to affect the end accuracy metric very
 much as shown below by a plot of `eta0` versus weighted f1 score for a
-`"constant"` learning rate.
+`"constant"` learning rate. I went with an `eta0` of `1e-3`.
 
 `[plot of et0 vs weighted f1 score](images/eta0_comparison.png)
 
@@ -258,7 +258,7 @@ SGDClassifier(
     loss='modified_huber',
     learning_rate='constant',
     average=True,
-    1e-3e-3,
+    eta0=1e-3,
 )
 ```
 
