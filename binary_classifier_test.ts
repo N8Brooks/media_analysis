@@ -23,7 +23,7 @@ Deno.test("fit", () => {
     0.015986517071723938,
     0.015986517071723938,
     0.015986517071723938,
-    0
+    0,
   ].forEach((expectedI, i) => {
     const absoluteDifference = Math.abs(actual[i] - expectedI);
     assert(absoluteDifference < TOLERANCE);

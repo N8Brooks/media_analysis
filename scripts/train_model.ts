@@ -19,17 +19,18 @@ if (axis !== "society" && axis != "economy") {
 }
 
 // Train model
-console.log("Training on society axis dataset");
 const train = await loadData(`datasets/${axis}_train.csv`);
+console.log(`Training on ${axis} axis dataset`);
 const weights = classifier.fit(train);
 
 // Test model
+console.log(`Testing on ${axis} axis dataset`);
 const test = await loadData(`datasets/${axis}_test.csv`);
 displayMetrics(test, weights);
 
 // Save model
 if (w) {
-  console.info("Saving model");
+  console.info(`Saving ${axis} axis model`);
   const model = new Uint8Array(weights.buffer);
   await Deno.writeFile(`models/${axis}_model.bin`, model);
 }
