@@ -1,12 +1,10 @@
 // https://en.wikipedia.org/wiki/Feature_hashing
 
 import { hash } from "./hash.ts";
+import { N_FEATURES } from "./constants.ts";
 
 /** Designates what words are vectorized */
 const TOKEN_PATTERN = /\b\w\w+\b/gu;
-
-/** The number of features to truncate hashes to */
-export const N_FEATURES = 2 ** 16;
 
 /** Transform accentuated unicode symbols into their simple counterpart */
 export const stripAccents = (text: string): string => {

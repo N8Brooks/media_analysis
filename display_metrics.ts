@@ -1,4 +1,5 @@
 import * as classifier from "./binary_classifier.ts";
+import { LOG_PRECISION } from "./constants.ts";
 import { Sample } from "./sample.ts";
 
 /** Used for metrics */
@@ -74,7 +75,12 @@ export const assortedMetrics = ({
   const precision = truePositives / (truePositives + falsePositives);
   const recall = truePositives / (truePositives + falseNegatives);
   const f1Score = 2 * precision * recall / (precision + recall);
-  return { accuracy, precision, recall, f1Score };
+  return {
+    accuracy: +accuracy.toFixed(LOG_PRECISION),
+    precision: +precision.toFixed(LOG_PRECISION),
+    recall: +recall.toFixed(LOG_PRECISION),
+    f1Score: +f1Score.toFixed(LOG_PRECISION),
+  };
 };
 
 /** Displays assorted metrics from the given test data */

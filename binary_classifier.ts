@@ -1,9 +1,10 @@
 // https://arxiv.org/pdf/1107.2490v2.pdf
 
 import { dLoss, loss } from "./loss.ts";
+import { LOG_PRECISION } from "./constants.ts";
 import { shuffle } from "./shuffle.ts";
 import { Sample } from "./sample.ts";
-import { N_FEATURES } from "./vectorize.ts";
+import { N_FEATURES } from "./constants.ts";
 
 /** Number of passes over the training samples */
 const EPOCHS = 16;
@@ -70,7 +71,7 @@ export const fit = (samples: Sample[]): Float32Array => {
       tau += rateOfAveraging * beta / alpha;
     }
 
-    const averageLoss = (sumLoss / samples.length).toFixed(4);
+    const averageLoss = (sumLoss / samples.length).toFixed(LOG_PRECISION);
     console.log(`Epoch ${epoch} - Average loss: ${averageLoss}`);
   }
 

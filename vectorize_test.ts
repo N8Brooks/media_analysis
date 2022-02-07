@@ -1,11 +1,7 @@
 import { assertEquals, assertStrictEquals } from "./test_deps.ts";
 import { hash } from "./hash.ts";
-import {
-  N_FEATURES,
-  preprocess,
-  stripAccents,
-  vectorize,
-} from "./vectorize.ts";
+import { N_FEATURES } from "./constants.ts";
+import { preprocess, stripAccents, vectorize } from "./vectorize.ts";
 
 /** Several accent unique and accent redundant letters */
 const ACCENTUATED = "àßÇÐéFgîõü";
