@@ -71,7 +71,7 @@ export const std = (samples: number[]) => {
   return variance ** 0.5;
 };
 
-/** The t distribution margin of error for an 80% confidence interval */
+/** The t distribution margin of error for the given alpha */
 export const marginOfError = (samples: number[], alpha: 0.2 | 0.05) => {
   const degreesOfFreedom = samples.length - 1;
   const tStatistic = tLookup(degreesOfFreedom)[alpha];
