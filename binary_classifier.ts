@@ -63,7 +63,7 @@ export const fit = (samples: Sample[]): Float32Array => {
       x.forEach((i) => {
         u[i] -= g * alpha * LEARNING_RATE * weight;
 
-        uHat[i] -= g * alpha * tau * LEARNING_RATE * weight;
+        uHat[i] += g * alpha * tau * LEARNING_RATE * weight;
       });
 
       // τ[t] = τ[t - 1] + η[t]b[t] / a[t]
