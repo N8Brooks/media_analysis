@@ -9,12 +9,12 @@ const TOKEN_PATTERN = /\b\w\w+\b/gu;
 export const N_FEATURES = 2 ** 16;
 
 /** Transform accentuated unicode symbols into their simple counterpart */
-const stripAccents = (text: string): string => {
+export const stripAccents = (text: string): string => {
   return text.normalize("NFKD").replace(/\p{Diacritic}/gu, "");
 };
 
 /** Converts text to lower case and removes accents */
-const preprocess = (text: string): string => {
+export const preprocess = (text: string): string => {
   return stripAccents(text.toLowerCase());
 };
 

@@ -15,7 +15,7 @@ from sklearn.model_selection import validation_curve
 from tqdm import tqdm
 
 # Society or economy axis
-AXIS = 'society'
+AXIS = 'economy'
 
 train = pd.read_csv(f'../datasets/{AXIS}_train.csv')
 test = pd.read_csv(f'../datasets/{AXIS}_test.csv')
@@ -32,46 +32,44 @@ hashingvectorizer = HashingVectorizer(
     ngram_range=(1, 1),
     norm=None,
     # this is altered for parameters that increase the unique token count
-    n_features=2**22,
+    n_features=2**16,
     binary=True,
     alternate_sign=False,
     dtype=np.float32,
 )
 
 sgdclassifier = SGDClassifier(
-    alpha=1e-6,
+    alpha=1e-3,
     class_weight='balanced',
     fit_intercept=False,
     loss='modified_huber',
     learning_rate='constant',
     average=True,
-    1e-3,
+    eta0=1e-5,
     tol=1e-4,
 )
 
 pipeline = make_pipeline(hashingvectorizer, sgdclassifier)
 
 parameters = [
-    ['hashingvectorizer__strip_accents', (None, 'unicode')],
-    ['hashingvectorizer__lowercase', (False, True)],
-    ['hashingvectorizer__stop_words', (None, 'english')],
-    ['hashingvectorizer__ngram_range', ((1, 1), (2, 2), (3, 3))],
-    ['hashingvectorizer__n_features', (
-        2**10, 2**12, 2**14, 2**16, 2**17, 2**18, 2**19, 2**20, 2**22, 2**24)],
-    ['hashingvectorizer__binary', (False, True)],
-    ['hashingvectorizer__norm', (None, 'l2')],
-    ['hashingvectorizer__alternate_sign', (False, True)],
-    ['sgdclassifier__loss', ('log', 'modified_huber')],
-    ['sgdclassifier__penalty', (None, 'l2')],
-    ['sgdclassifier__alpha', (
-        1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12)],
+    # ['hashingvectorizer__strip_accents', (None, 'unicode')],
+    # ['hashingvectorizer__lowercase', (False, True)],
+    # ['hashingvectorizer__stop_words', (None, 'english')],
+    # ['hashingvectorizer__ngram_range', ((1, 1), (2, 2), (3, 3))],
+    # ['hashingvectorizer__n_features', (
+    #     2**10, 2**12, 2**14, 2**16, 2**17, 2**18, 2**19, 2**20, 2**22, 2**24)],
+    # ['hashingvectorizer__binary', (False, True)],
+    # ['hashingvectorizer__norm', (None, 'l2')],
+    # ['hashingvectorizer__alternate_sign', (False, True)],
+    # ['sgdclassifier__loss', ('log', 'modified_huber')],
+    # ['sgdclassifier__penalty', (None, 'l2')],
+    # ['sgdclassifier__alpha', (1e-1, 1e-2, 1e-3, 1e-4, 1e-5)],
     # Too many other parameters are required to optimally evaluate learning rates
     # ['sgdclassifier__learning_rate', ('constant', 'optimal')],
-    ['sgdclassifier__eta0', (
-        1e2, 1e1, 1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8)],
-    ['sgdclassifier__average', (False, len(train), True)],
-    ['sgdclassifier__warm_start', (False, True)],
-    ['sgdclassifier__fit_intercept', (False, True)],
+    ['sgdclassifier__eta0', (1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7)],
+    # ['sgdclassifier__average', (False, len(train), True)],
+    # ['sgdclassifier__warm_start', (False, True)],
+    # ['sgdclassifier__fit_intercept', (False, True)],
 ]
 
 cv = StratifiedShuffleSplit(
@@ -87,7 +85,6 @@ for param_name, param_range in tqdm(parameters):
         param_name=param_name,
         param_range=param_range,
         cv=cv,
-        scoring='f1_weighted',
         n_jobs=-1,
     )
 
@@ -113,6 +110,6 @@ for param_name, param_range in tqdm(parameters):
         ax.set_title(param_name)
 
     ax.set_xlabel('parameter values')
-    ax.set_ylabel('weighted f1 score')
+    ax.set_ylabel('accuracy')
 
     plt.show()
