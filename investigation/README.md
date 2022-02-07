@@ -232,7 +232,7 @@ as well. The very high values didn't seem to affect the end accuracy metric very
 much as shown below by a plot of `eta0` versus weighted f1 score for a
 `"constant"` learning rate. I went with an `eta0` of `1e-3`.
 
-`[plot of et0 vs weighted f1 score](images/eta0_comparison.png)
+![plot of et0 vs weighted f1 score](images/eta0_comparison.png)
 
 ## SGD Classifier - warm_start
 
@@ -289,3 +289,5 @@ given it was not limited in the same way that the ASGD model was. Since the
 model did not appear to reach its asymptotic limit for the dataset I expect more
 training samples could further improve its accuracy. Additionally, given enough
 samples using other parameters for the vectorizer could be worthwhile.
+
+![plot learning curve](images/learning_curve.png)
