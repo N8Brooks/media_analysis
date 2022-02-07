@@ -17,3 +17,19 @@ Math.random = () => {
   t ^= t + Math.imul(t ^ t >>> 7, t | 61);
   return ((t ^ t >>> 14) >>> 0) / MAX_32_BIT_INT;
 };
+
+/** Replaces console method for testing */
+export const stubConsole = (methodName: "log") => {
+  const logs: string[] = [];
+  const method = console[methodName];
+  console[methodName] = (log: string) => {
+    logs.push(log);
+  };
+  const restore = () => {
+    console[methodName] = method;
+  };
+  return {
+    logs,
+    restore,
+  };
+};
