@@ -1,4 +1,4 @@
-# models
+# Models
 
 Output collected from the models saved in this directory. The precision, recall,
 and f1 score really only make sense when considering certain problems with
