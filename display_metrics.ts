@@ -83,6 +83,7 @@ export const assortedMetrics = ({
   };
 };
 
+/** Return the weighted average of an `Array` of metrics */
 export const weightedAverage = (
   metrics: Record<string, number>[],
 ): Record<string, number> => {
