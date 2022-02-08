@@ -28,11 +28,11 @@ export const computeSensitivityAndSpecificity = (
     } else if (yTrue === -1 && yPred === -1) {
       trueNegatives++;
     } else if (yTrue === 1 && yPred === -1) {
-      falsePositives++;
-    } else if (yTrue === -1 && yPred === 1) {
       falseNegatives++;
+    } else if (yTrue === -1 && yPred === 1) {
+      falsePositives++;
     } else {
-      console.warn(`Encountered an invalid  yTrue=${yTrue} and yPred=${yPred}`);
+      console.warn(`Encountered an invalid yTrue=${yTrue} and yPred=${yPred}`);
     }
   });
 
