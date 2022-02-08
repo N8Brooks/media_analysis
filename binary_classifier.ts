@@ -75,6 +75,7 @@ export const fit = (samples: Sample[]): Float32Array => {
     console.log(`Epoch ${epoch} - Average loss: ${averageLoss}`);
   }
 
+  // θ_mean[t] = u_hat[t] / b[t] = (τ[t] * u[t] + u_hat[t]) / βt
   return u.map((weight, i) => (tau * weight + uHat[i]) / beta);
 };
 
