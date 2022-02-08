@@ -76,11 +76,28 @@ export const assortedMetrics = ({
   const recall = truePositives / (truePositives + falseNegatives);
   const f1Score = 2 * precision * recall / (precision + recall);
   return {
-    accuracy: +accuracy.toFixed(LOG_PRECISION),
-    precision: +precision.toFixed(LOG_PRECISION),
-    recall: +recall.toFixed(LOG_PRECISION),
-    f1Score: +f1Score.toFixed(LOG_PRECISION),
+    accuracy: accuracy,
+    precision: precision,
+    recall: recall,
+    f1Score: f1Score,
   };
+};
+
+export const weightedAverage = (
+  metrics: Record<string, number>[],
+): Record<string, number> => {
+  const sum = Object.fromEntries(
+    Object.keys(metrics[0]).map((key) => [key, 0]),
+  );
+  metrics.forEach((object) => {
+    Object.entries(object).forEach(([key, value]) => {
+      sum[key] += value;
+    });
+  });
+  const mean = Object.fromEntries(
+    Object.entries(sum).map(([key, value]) => [key, value / metrics.length]),
+  );
+  return mean;
 };
 
 /** Displays assorted metrics from the given test data */
@@ -93,5 +110,19 @@ export const displayMetrics = (
     weights,
   );
   console.table(confusionMatrix(sensitivityAndSpecificity));
-  console.table(assortedMetrics(sensitivityAndSpecificity));
+  // Weighted metrics
+  const positiveMetrics = assortedMetrics(sensitivityAndSpecificity);
+  const negativeMetrics = assortedMetrics({
+    trueNegatives: sensitivityAndSpecificity.truePositives,
+    truePositives: sensitivityAndSpecificity.trueNegatives,
+    falsePositives: sensitivityAndSpecificity.falseNegatives,
+    falseNegatives: sensitivityAndSpecificity.falsePositives,
+  });
+  const averageMetrics = weightedAverage([positiveMetrics, negativeMetrics]);
+  const fixedMetrics = Object.fromEntries(
+    Object.entries(averageMetrics).map((
+      [name, value],
+    ) => [name, +value.toFixed(LOG_PRECISION)]),
+  );
+  console.table(fixedMetrics);
 };
