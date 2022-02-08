@@ -55,6 +55,7 @@ export const tLookup = (degreesOfFreedom: number) => {
   return T_DISTRIBUTION_TABLE[l];
 };
 
+/** Average of an `Array` of `Number`s */
 export const mean = (samples: number[]): number => {
   return samples.reduce((a, b) => a + b) / samples.length;
 };
