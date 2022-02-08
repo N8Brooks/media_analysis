@@ -8,6 +8,15 @@ https://n8brooks.github.io/media_analysis/site/
 
 ## Bundling
 
+The UI is bundled using the Deno cli as follows.
+
 ```bash
 deno bundle --no-check political_compass.ts ./site/political_compass.js
+```
+
+The models are compressed using gzip.
+
+```bash
+gzip --best --stdout models/economy_model.bin > site/economy_model.bin.gz
+gzip --best --stdout models/society_model.bin > site/society_model.bin.gz
 ```

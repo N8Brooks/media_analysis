@@ -30,14 +30,29 @@
   </body>
   <script src="political_compass.js"></script>
   <script>
-    // Select compass custom html element and fetch weights
+    // Grab custom html element
     const politicalCompass = document.querySelector('political-compass');
-    fetch("../models/society_model.bin")
+
+    // Fetch weights
+    fetch("society_model.bin.gz")
+      .then((response) => response.blob())
+      .then((blob) => {
+        const ds = new DecompressionStream('gzip')
+        const decompressionStream = blob.stream().pipeThrough(ds);
+        return new Response(decompressionStream);
+      })
       .then((response) => response.arrayBuffer())
       .then((array) => {
         politicalCompass.societyWeights = new Float32Array(array);
       });
-    fetch("../models/economy_model.bin")
+
+    fetch("economy_model.bin.gz")
+      .then((response) => response.blob())
+      .then((blob) => {
+        const ds = new DecompressionStream('gzip')
+        const decompressionStream = blob.stream().pipeThrough(ds);
+        return new Response(decompressionStream);
+      })
       .then((response) => response.arrayBuffer())
       .then((array) => {
         politicalCompass.economyWeights = new Float32Array(array);
