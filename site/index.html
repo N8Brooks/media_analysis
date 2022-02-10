@@ -12,7 +12,7 @@
         <script src="app.js" defer></script>
     </head>
     <style>
-        form {
+        main {
             max-width: 500px;
             height: 100%;
             margin: 0 auto;
@@ -26,19 +26,21 @@
         }
     </style>
     <body>
-        <form>
-            <label>
-                <h1>Political Compass</h1>
-                <political-compass></political-compass>
-                <textarea
-                    autofocus
-                    minlength="100"
-                    placeholder="Enter samples of political text like an article here."
-                    required
-                    spellcheck="true"
-                ></textarea>
-            </label>
-            <input type="submit" value="Evaluate" />
-        </div>
+        <main>
+            <h1>Political Compass</h1>
+            <political-compass></political-compass>
+            <form>
+                <label aria-label="Political text">
+                    <textarea
+                        minlength="100"
+                        placeholder="Enter samples of political text like an article here."
+                        required
+                        spellcheck="true"
+                        aria-required="true"
+                    ></textarea>
+                </label>
+                <input type="submit" value="Evaluate" />
+            </form>
+        </main>
     </body>
 </html>

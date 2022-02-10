@@ -46,8 +46,8 @@ const hash = (key)=>{
     hash1 ^= hash1 >>> 16;
     return hash1 >>> 0;
 };
-const TOKEN_PATTERN = /\b\w\w+\b/gu;
 const N_FEATURES = 2 ** 16;
+const TOKEN_PATTERN = /\b\w\w+\b/gu;
 const stripAccents = (text)=>{
     return text.normalize("NFKD").replace(/\p{Diacritic}/gu, "");
 };
@@ -253,7 +253,7 @@ const T_DISTRIBUTION_TABLE = [
 ];
 const tLookup = (degreesOfFreedom)=>{
     let l = 0;
-    let r = T_DISTRIBUTION_TABLE.length;
+    let r = T_DISTRIBUTION_TABLE.length - 1;
     while(l < r){
         const m = Math.floor((l + r) / 2);
         const index = T_DISTRIBUTION_TABLE[m].i;
@@ -270,6 +270,9 @@ const mean = (samples)=>{
     ) / samples.length;
 };
 const std = (samples)=>{
+    if (samples.length < 2) {
+        throw new RangeError("Must be given at least 2 samples");
+    }
     const sampleMean = mean(samples);
     const sumSquaredError = samples.reduce((sum, sample)=>{
         const error = sample - sampleMean;
@@ -286,26 +289,6 @@ const marginOfError = (samples, alpha)=>{
     const marginOfError1 = tStatistic * standardError;
     return marginOfError1;
 };
-const POINT_ATTRIBUTES = {
-    cx: "50%",
-    cy: "50%",
-    fill: "Black",
-    r: "2%"
-};
-const CONFIDENCE_REGION_80_ATTRIBUTES = {
-    cx: "50%",
-    cy: "50%",
-    rx: `${5}%`,
-    ry: `${5}%`
-};
-const CONFIDENCE_REGION_80_STYLE = "fill: Gray; opacity: 60%";
-const CONFIDENCE_REGION_95_ATTRIBUTES = {
-    cx: "50%",
-    cy: "50%",
-    rx: `${10}%`,
-    ry: `${10}%`
-};
-const CONFIDENCE_REGION_95_STYLE = "fill: LightGray; opacity: 60%";
 const Q2_ATTRIBUTES = {
     style: "fill: #fa7576",
     width: "50%",
@@ -350,22 +333,35 @@ class PoliticalCompass extends HTMLElement {
     constructor(){
         super();
         const style = document.createElement("style");
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("viewBox", "0 0 100 100");
+        const svg = svgElementFactory("svg", {
+            viewBox: "0 0 100 100"
+        });
         svg.appendChild(svgElementFactory("rect", Q1_ATTRIBUTES));
         svg.appendChild(svgElementFactory("rect", Q2_ATTRIBUTES));
         svg.appendChild(svgElementFactory("rect", Q3_ATTRIBUTES));
         svg.appendChild(svgElementFactory("rect", Q4_ATTRIBUTES));
-        this.#confidenceRegion95 = svgElementFactory("ellipse", CONFIDENCE_REGION_95_ATTRIBUTES);
-        this.#confidenceRegion95.setAttribute("style", CONFIDENCE_REGION_95_STYLE);
-        this.setConfidenceRegion95();
+        this.#confidenceRegion95 = svgElementFactory("ellipse", {
+            style: "fill: lightGray; opacity: 60%"
+        });
+        this.setConfidenceRegion95({
+            visibility: "hidden"
+        });
         svg.appendChild(this.#confidenceRegion95);
-        this.#confidenceRegion80 = svgElementFactory("ellipse", CONFIDENCE_REGION_80_ATTRIBUTES);
-        this.#confidenceRegion80.setAttribute("style", CONFIDENCE_REGION_80_STYLE);
-        this.setConfidenceRegion80();
+        this.#confidenceRegion80 = svgElementFactory("ellipse", {
+            style: "fill: gray; opacity: 60%"
+        });
+        this.setConfidenceRegion80({
+            visibility: "hidden"
+        });
         svg.appendChild(this.#confidenceRegion80);
-        this.#point = svgElementFactory("circle", POINT_ATTRIBUTES);
-        this.#point = svg.appendChild(this.#point);
+        this.#point = svgElementFactory("circle", {
+            fill: "black",
+            r: "2%"
+        });
+        this.setPoint({
+            visibility: "hidden"
+        });
+        svg.appendChild(this.#point);
         this.attachShadow({
             mode: "open"
         }).append(style, svg);
@@ -382,21 +378,24 @@ class PoliticalCompass extends HTMLElement {
         }
         this.#economyWeights = economyWeights;
     }
-    setConfidenceRegion95({ cx , cy , rx , ry  } = CONFIDENCE_REGION_95_ATTRIBUTES) {
+    setConfidenceRegion95({ cx ="50%" , cy ="50%" , rx ="0%" , ry ="0%" , visibility ="visible" ,  } = {}) {
         this.#confidenceRegion95.setAttribute("cx", cx);
         this.#confidenceRegion95.setAttribute("cy", cy);
         this.#confidenceRegion95.setAttribute("rx", rx);
         this.#confidenceRegion95.setAttribute("ry", ry);
+        this.#confidenceRegion95.setAttribute("visibility", visibility);
     }
-    setConfidenceRegion80({ cx , cy , rx , ry  } = CONFIDENCE_REGION_80_ATTRIBUTES) {
+    setConfidenceRegion80({ cx ="50%" , cy ="50%" , rx ="0%" , ry ="0%" , visibility ="visible" ,  } = {}) {
         this.#confidenceRegion80.setAttribute("cx", cx);
         this.#confidenceRegion80.setAttribute("cy", cy);
         this.#confidenceRegion80.setAttribute("rx", rx);
         this.#confidenceRegion80.setAttribute("ry", ry);
+        this.#confidenceRegion80.setAttribute("visibility", visibility);
     }
-    setPoint(cx = "50%", cy = "50%") {
+    setPoint({ cx ="50%" , cy ="50%" , visibility ="visible"  } = {}) {
         this.#point.setAttribute("cx", cx);
         this.#point.setAttribute("cy", cy);
+        this.#point.setAttribute("visibility", visibility);
     }
     computeConfidenceRegion(texts) {
         if (!this.#societyWeights || !this.#economyWeights) {
@@ -404,8 +403,15 @@ class PoliticalCompass extends HTMLElement {
             return;
         }
         if (texts.length === 0) {
-            this.setConfidenceRegion80();
-            this.setConfidenceRegion95();
+            this.setConfidenceRegion95({
+                visibility: "hidden"
+            });
+            this.setConfidenceRegion80({
+                visibility: "hidden"
+            });
+            this.setPoint({
+                visibility: "hidden"
+            });
             return;
         }
         const societyProbabilities = [];
@@ -420,15 +426,15 @@ class PoliticalCompass extends HTMLElement {
         const societyMean = mean(societyProbabilities);
         const cx = 100 * (1 + societyMean) / 2 + "%";
         const societyMarginOfError80 = marginOfError(societyProbabilities, 0.2);
-        const rx80 = (100 * societyMarginOfError80 || 1000) + "%";
+        const rx80 = (100 * societyMarginOfError80 || 100) + "%";
         const societyMarginOfError95 = marginOfError(societyProbabilities, 0.05);
-        const rx95 = (100 * societyMarginOfError95 || 1000) + "%";
+        const rx95 = (100 * societyMarginOfError95 || 100) + "%";
         const economyMean = mean(economyProbabilities);
         const cy = 100 * (1 - economyMean) / 2 + "%";
         const economyMarginOfError80 = marginOfError(societyProbabilities, 0.2);
-        const ry80 = (100 * economyMarginOfError80 || 1000) + "%";
+        const ry80 = (100 * economyMarginOfError80 || 100) + "%";
         const economyMarginOfError95 = marginOfError(societyProbabilities, 0.05);
-        const ry95 = (100 * economyMarginOfError95 || 1000) + "%";
+        const ry95 = (100 * economyMarginOfError95 || 100) + "%";
         this.setConfidenceRegion95({
             cx,
             cy,
@@ -441,7 +447,10 @@ class PoliticalCompass extends HTMLElement {
             rx: rx80,
             ry: ry80
         });
-        this.setPoint(cx, cy);
+        this.setPoint({
+            cx,
+            cy
+        });
     }
 }
 customElements.define("political-compass", PoliticalCompass);

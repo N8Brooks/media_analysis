@@ -5,41 +5,7 @@ import { probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
 
 /** Used for when there is only one text */
-const MAX_AXIS_LENGTH = 1_000;
-
-/** Attributes for estimate mean */
-const POINT_ATTRIBUTES = {
-  cx: "50%",
-  cy: "50%",
-  fill: "Black",
-  r: "2%",
-};
-
-/** The minimum ellipse axis size for the confidence interval */
-const MIN_AXIS_LENGTH_80 = 5;
-
-/** 80% confidence region attributes */
-const CONFIDENCE_REGION_80_ATTRIBUTES = {
-  cx: "50%",
-  cy: "50%",
-  rx: `${MIN_AXIS_LENGTH_80}%`,
-  ry: `${MIN_AXIS_LENGTH_80}%`,
-};
-
-/** Confidence region styling */
-const CONFIDENCE_REGION_80_STYLE = "fill: Gray; opacity: 60%";
-
-const MIN_AXIS_LENGTH_95 = 10;
-
-/** 95% confidence region attributes */
-const CONFIDENCE_REGION_95_ATTRIBUTES = {
-  cx: "50%",
-  cy: "50%",
-  rx: `${MIN_AXIS_LENGTH_95}%`,
-  ry: `${MIN_AXIS_LENGTH_95}%`,
-};
-
-const CONFIDENCE_REGION_95_STYLE = "fill: LightGray; opacity: 60%";
+const MAX_AXIS_LENGTH = 100;
 
 /** Authoritarian left quadrant attributes */
 const Q2_ATTRIBUTES = {
@@ -101,31 +67,31 @@ class PoliticalCompass extends HTMLElement {
     super();
 
     const style = document.createElement("style");
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 100 100");
+
+    const svg = svgElementFactory("svg", { viewBox: "0 0 100 100" });
     svg.appendChild(svgElementFactory("rect", Q1_ATTRIBUTES));
     svg.appendChild(svgElementFactory("rect", Q2_ATTRIBUTES));
     svg.appendChild(svgElementFactory("rect", Q3_ATTRIBUTES));
     svg.appendChild(svgElementFactory("rect", Q4_ATTRIBUTES));
 
-    this.#confidenceRegion95 = svgElementFactory(
-      "ellipse",
-      CONFIDENCE_REGION_95_ATTRIBUTES,
-    );
-    this.#confidenceRegion95.setAttribute("style", CONFIDENCE_REGION_95_STYLE);
-    this.setConfidenceRegion95();
+    this.#confidenceRegion95 = svgElementFactory("ellipse", {
+      style: "fill: lightGray; opacity: 60%",
+    });
+    this.setConfidenceRegion95({ visibility: "hidden" });
     svg.appendChild(this.#confidenceRegion95);
 
-    this.#confidenceRegion80 = svgElementFactory(
-      "ellipse",
-      CONFIDENCE_REGION_80_ATTRIBUTES,
-    );
-    this.#confidenceRegion80.setAttribute("style", CONFIDENCE_REGION_80_STYLE);
-    this.setConfidenceRegion80();
+    this.#confidenceRegion80 = svgElementFactory("ellipse", {
+      style: "fill: gray; opacity: 60%",
+    });
+    this.setConfidenceRegion80({ visibility: "hidden" });
     svg.appendChild(this.#confidenceRegion80);
 
-    this.#point = svgElementFactory("circle", POINT_ATTRIBUTES);
-    this.#point = svg.appendChild(this.#point);
+    this.#point = svgElementFactory("circle", {
+      fill: "black",
+      r: "2%",
+    });
+    this.setPoint({ visibility: "hidden" });
+    svg.appendChild(this.#point);
 
     this.attachShadow({ mode: "open" }).append(style, svg);
   }
@@ -147,29 +113,40 @@ class PoliticalCompass extends HTMLElement {
   }
 
   /** Update the svg ellipse representing the 95% confidence region */
-  setConfidenceRegion95(
-    { cx, cy, rx, ry } = CONFIDENCE_REGION_95_ATTRIBUTES,
-  ): void {
+  setConfidenceRegion95({
+    cx = "50%",
+    cy = "50%",
+    rx = "0%",
+    ry = "0%",
+    visibility = "visible",
+  } = {}): void {
     this.#confidenceRegion95.setAttribute("cx", cx);
     this.#confidenceRegion95.setAttribute("cy", cy);
     this.#confidenceRegion95.setAttribute("rx", rx);
     this.#confidenceRegion95.setAttribute("ry", ry);
+    this.#confidenceRegion95.setAttribute("visibility", visibility);
   }
 
   /** Update the svg ellipse representing the 80% confidence region */
-  setConfidenceRegion80(
-    { cx, cy, rx, ry } = CONFIDENCE_REGION_80_ATTRIBUTES,
-  ): void {
+  setConfidenceRegion80({
+    cx = "50%",
+    cy = "50%",
+    rx = "0%",
+    ry = "0%",
+    visibility = "visible",
+  } = {}): void {
     this.#confidenceRegion80.setAttribute("cx", cx);
     this.#confidenceRegion80.setAttribute("cy", cy);
     this.#confidenceRegion80.setAttribute("rx", rx);
     this.#confidenceRegion80.setAttribute("ry", ry);
+    this.#confidenceRegion80.setAttribute("visibility", visibility);
   }
 
   /** Update the svg showing the sample mean */
-  setPoint(cx = "50%", cy = "50%"): void {
+  setPoint({ cx = "50%", cy = "50%", visibility = "visible" } = {}): void {
     this.#point.setAttribute("cx", cx);
     this.#point.setAttribute("cy", cy);
+    this.#point.setAttribute("visibility", visibility);
   }
 
   /** Compute the political compass confidence region for an `Array` of texts */
@@ -179,11 +156,11 @@ class PoliticalCompass extends HTMLElement {
       return;
     }
 
-    // Show default ellipse shape
+    // Remove ellipse
     if (texts.length === 0) {
-      this.setConfidenceRegion95();
-      this.setConfidenceRegion80();
-      this.setPoint();
+      this.setConfidenceRegion95({ visibility: "hidden" });
+      this.setConfidenceRegion80({ visibility: "hidden" });
+      this.setPoint({ visibility: "hidden" });
       return;
     }
 
@@ -213,7 +190,7 @@ class PoliticalCompass extends HTMLElement {
 
     this.setConfidenceRegion95({ cx, cy, rx: rx95, ry: ry95 });
     this.setConfidenceRegion80({ cx, cy, rx: rx80, ry: ry80 });
-    this.setPoint(cx, cy);
+    this.setPoint({ cx, cy });
   }
 }
 

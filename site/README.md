@@ -11,7 +11,7 @@ https://n8brooks.github.io/media_analysis/site/
 The UI is bundled using the Deno cli as follows.
 
 ```bash
-deno bundle --no-check political_compass.ts ./site/political_compass.js
+deno bundle --no-check political_compass.ts site/political_compass.js
 ```
 
 The models are compressed using gzip.
