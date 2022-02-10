@@ -41,7 +41,7 @@ fetch("models/economy_model.bin.gz")
 
 // Add event listener for when text is submitted
 const politicalText = document.querySelector("textarea");
-document.querySelector("button").addEventListener("click", (event) => {
+document.querySelector("input").addEventListener("submit", (event) => {
   event.preventDefault();
   const texts = politicalText.value.split("\n\n");
   politicalCompass.computeConfidenceRegion(texts);

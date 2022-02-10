@@ -3,16 +3,16 @@
     <head>
         <title>Political Compass</title>
         <meta name="description" content="Predicts documents on the political compass" />
-        <meta name="theme-color" content="#317EFB"/>
+        <meta name="theme-color" content="#317EFB" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="apple-touch-icon" href="icons/political_compass_x192.png">
-        <link rel="icon" href="icons/political_compass.ico" type="image/x-icon">
-        <link rel="manifest" href="manifest.json">
+        <link rel="apple-touch-icon" href="icons/political_compass_x192.png" />
+        <link rel="icon" href="icons/political_compass.ico" type="image/x-icon" />
+        <link rel="manifest" href="manifest.json" />
         <script src="political_compass.js" defer></script>
         <script src="app.js" defer></script>
     </head>
     <style>
-        div {
+        form {
             max-width: 500px;
             height: 100%;
             margin: 0 auto;
@@ -26,13 +26,19 @@
         }
     </style>
     <body>
-        <div>
+        <form>
             <label>
                 <h1>Political Compass</h1>
                 <political-compass></political-compass>
-                <textarea></textarea>
+                <textarea
+                    autofocus
+                    minlength="100"
+                    placeholder="Enter samples of political text like an article here."
+                    required
+                    spellcheck="true"
+                ></textarea>
             </label>
-            <button>Evaluate</button>
+            <input type="submit" value="Evaluate" />
         </div>
     </body>
 </html>
