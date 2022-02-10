@@ -7,6 +7,7 @@ const CONTENT = [
   "icons/political_compass.svg",
   "models/economy_model.bin.gz",
   "models/society_model.bin.gz",
+  "app.js",
   "index.html",
   "manifest.json",
   "political_compass.js",
