@@ -42,7 +42,7 @@
         // Grab custom html element
         const politicalCompass = document.querySelector('political-compass');
 
-        // Fetch weights
+        // Fetch society weights
         fetch('society_model.bin.gz')
             .then((response) => response.blob())
             .then((blob) => {
@@ -52,9 +52,16 @@
             })
             .then((response) => response.arrayBuffer())
             .then((array) => {
-                politicalCompass.societyWeights = new Float32Array(array);
+                const intervalId = setInterval(() => {
+                    if (!customElements.get('political-compass')) {
+                        return;
+                    }
+                    politicalCompass.societyWeights = new Float32Array(array);
+                    clearInterval(intervalId);
+                }, 50);
             });
 
+        // Fetch economy weights
         fetch('economy_model.bin.gz')
             .then((response) => response.blob())
             .then((blob) => {
@@ -64,7 +71,13 @@
             })
             .then((response) => response.arrayBuffer())
             .then((array) => {
-                politicalCompass.economyWeights = new Float32Array(array);
+                const intervalId = setInterval(() => {
+                    if (!customElements.get('political-compass')) {
+                        return;
+                    }
+                    politicalCompass.economyWeights = new Float32Array(array);
+                    clearInterval(intervalId);
+                }, 50);
             });
 
         // Add event listener for when text is submitted
