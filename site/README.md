@@ -1,6 +1,6 @@
 # Site
 
-A light weight website that can be used to predict some text on the political
+A progressive web app that can be used to predict some text on the political
 compass axes. Note that in order to compute the confidence intervals the text is
 split upon double newlines.
 
