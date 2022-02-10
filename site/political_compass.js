@@ -403,7 +403,6 @@ class PoliticalCompass extends HTMLElement {
             console.warn("One or both of the weights has not been set");
             return;
         }
-        console.log(texts.length);
         if (texts.length === 0) {
             this.setConfidenceRegion80();
             this.setConfidenceRegion95();
