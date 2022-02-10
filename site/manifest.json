@@ -1,0 +1,26 @@
+{
+  "name": "Political Compass",
+  "description": "Places text on the political compass.",
+  "icons": [
+    {
+      "src": "icons/political_compass_x196.png",
+      "sizes": "196x196",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/political_compass_x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/political_compass.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "background_color": "white",
+  "theme_color": "white"
+}
