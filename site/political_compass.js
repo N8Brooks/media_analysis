@@ -294,7 +294,7 @@ const POLITICAL_COMPASS_ATTRIBUTES = {
     tagName: "svg",
     idPrefix: "political-compass",
     titleText: "Political Compass",
-    descText: "Places samples of text on the political compass",
+    descText: "Accessible visual that places samples of text on the political compass",
     viewBox: "0 0 100 100",
     role: "img",
     "aria-live": "polite"
