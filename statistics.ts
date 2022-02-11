@@ -63,7 +63,7 @@ export const mean = (samples: number[]): number => {
 /** Standard deviation for a sample */
 export const std = (samples: number[]) => {
   if (samples.length < 2) {
-    throw new RangeError("Must be given at least 2 samples");
+    return 1; // Imputed
   }
   const sampleMean = mean(samples);
   const sumSquaredError = samples.reduce((sum, sample) => {

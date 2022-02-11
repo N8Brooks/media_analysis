@@ -271,7 +271,7 @@ const mean = (samples)=>{
 };
 const std = (samples)=>{
     if (samples.length < 2) {
-        throw new RangeError("Must be given at least 2 samples");
+        return 1;
     }
     const sampleMean = mean(samples);
     const sumSquaredError = samples.reduce((sum, sample)=>{
