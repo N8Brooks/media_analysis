@@ -2,7 +2,7 @@
 const politicalCompass = document.querySelector("political-compass");
 
 // Fetch society weights
-fetch("/models/society_model.bin")
+fetch("../models/society_model.bin")
   .then((response) => response.arrayBuffer())
   .then((array) => {
     const intervalId = setInterval(() => {
@@ -15,7 +15,7 @@ fetch("/models/society_model.bin")
   });
 
 // Fetch economy weights
-fetch("/models/economy_model.bin")
+fetch("../models/economy_model.bin")
   .then((response) => response.arrayBuffer())
   .then((array) => {
     const intervalId = setInterval(() => {
