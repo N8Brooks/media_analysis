@@ -55,7 +55,7 @@ Deno.test("mean of 3", () => {
 });
 
 Deno.test("std with 1", () => {
-  assertThrows(() => std([1]));
+  assertStrictEquals(mean([1]), 1);
 });
 
 Deno.test("std of 0", () => {
