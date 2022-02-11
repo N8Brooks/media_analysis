@@ -12,8 +12,8 @@ const TOLERANCE = 1e-8;
 Deno.test("start t lookup", () => {
   const actual = tLookup(-1);
   const expected = {
-    "0.05": NaN,
-    "0.2": NaN,
+    "0.05": 10,
+    "0.2": 10,
     i: 0,
   };
   assertEquals(actual, expected);

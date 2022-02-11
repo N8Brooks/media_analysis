@@ -67,13 +67,13 @@ const probability = (x, weights)=>{
     x.forEach((i)=>{
         prob += weights[i];
     });
-    return Math.min(1, Math.max(-1, prob));
+    return prob;
 };
 const T_DISTRIBUTION_TABLE = [
     {
         i: 0,
-        0.2: NaN,
-        0.05: NaN
+        0.2: 10,
+        0.05: 10
     },
     {
         i: 1,
@@ -289,7 +289,18 @@ const marginOfError = (samples, alpha)=>{
     const marginOfError1 = tStatistic * standardError;
     return marginOfError1;
 };
+const POLITICAL_COMPASS_ATTRIBUTES = {
+    tabindex: "0",
+    tagName: "svg",
+    idPrefix: "political-compass",
+    titleText: "Political Compass",
+    descText: "Places samples of text on the political compass",
+    viewBox: "0 0 100 100",
+    role: "img",
+    "aria-live": "polite"
+};
 const Q2_ATTRIBUTES = {
+    tagName: "rect",
     style: "fill: #fa7576",
     width: "50%",
     height: "50%",
@@ -297,6 +308,7 @@ const Q2_ATTRIBUTES = {
     y: "0%"
 };
 const Q1_ATTRIBUTES = {
+    tagName: "rect",
     style: "fill: #a0d5ff",
     width: "50%",
     height: "50%",
@@ -304,6 +316,7 @@ const Q1_ATTRIBUTES = {
     y: "0%"
 };
 const Q3_ATTRIBUTES = {
+    tagName: "rect",
     style: "fill: #cdf6ca",
     width: "50%",
     height: "50%",
@@ -311,60 +324,86 @@ const Q3_ATTRIBUTES = {
     y: "50%"
 };
 const Q4_ATTRIBUTES = {
+    tagName: "rect",
     style: "fill: #e0cdf5",
     width: "50%",
     height: "50%",
     x: "50%",
     y: "50%"
 };
-const svgElementFactory = (name, attributes)=>{
-    const element = document.createElementNS("http://www.w3.org/2000/svg", name);
-    for (const [name1, value] of Object.entries(attributes)){
-        element.setAttribute(name1, value);
+const CONFIDENCE_REGION_95_ATTRIBUTES = {
+    role: "presentation",
+    tabindex: "0",
+    tagName: "ellipse",
+    idPrefix: "confidence-region-95",
+    titleText: "95% Confidence Interval between -10 and 10",
+    descText: "",
+    style: "fill: lightGray; opacity: 60%",
+    visibility: "hidden"
+};
+const CONFIDENCE_REGION_80_ATTRIBUTES = {
+    role: "presentation",
+    tabindex: "0",
+    tagName: "ellipse",
+    idPrefix: "confidence-region-80",
+    titleText: "80% Confidence Interval between -10 and 10",
+    descText: "",
+    style: "fill: gray; opacity: 60%",
+    visibility: "hidden"
+};
+const PREDICTION_MEAN_ATTRIBUTES = {
+    role: "presentation",
+    tabindex: "0",
+    tagName: "circle",
+    idPrefix: "prediction-mean",
+    titleText: "Prediction Mean",
+    descText: "",
+    fill: "black",
+    r: "2%",
+    visibility: "hidden"
+};
+const svgElementFactory = ({ tagName , ...attributes })=>{
+    const element = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+    for (const attribute of Object.entries(attributes)){
+        element.setAttribute(...attribute);
     }
+    return element;
+};
+const accessibleSvgElementFactory = ({ idPrefix , titleText , descText , ...attributes })=>{
+    const titleElement = document.createElement("title");
+    titleElement.innerText = titleText;
+    titleElement.id = `${idPrefix}-title`;
+    const descElement = document.createElement("desc");
+    descElement.innerText = descText;
+    descElement.id = `${idPrefix}-desc`;
+    const element = svgElementFactory(attributes);
+    const labelledBy = `${titleElement.id} ${descElement.id}`;
+    element.setAttribute("aria-labelledby", labelledBy);
+    element.prepend(titleElement, descElement);
     return element;
 };
 class PoliticalCompass extends HTMLElement {
     #societyWeights;
     #economyWeights;
-    #point;
+    #predictionMean;
     #confidenceRegion80;
     #confidenceRegion95;
     constructor(){
         super();
-        const style = document.createElement("style");
-        const svg = svgElementFactory("svg", {
-            viewBox: "0 0 100 100"
-        });
-        svg.appendChild(svgElementFactory("rect", Q1_ATTRIBUTES));
-        svg.appendChild(svgElementFactory("rect", Q2_ATTRIBUTES));
-        svg.appendChild(svgElementFactory("rect", Q3_ATTRIBUTES));
-        svg.appendChild(svgElementFactory("rect", Q4_ATTRIBUTES));
-        this.#confidenceRegion95 = svgElementFactory("ellipse", {
-            style: "fill: lightGray; opacity: 60%"
-        });
-        this.setConfidenceRegion95({
-            visibility: "hidden"
-        });
+        const svg = accessibleSvgElementFactory(POLITICAL_COMPASS_ATTRIBUTES);
+        svg.appendChild(svgElementFactory(Q1_ATTRIBUTES));
+        svg.appendChild(svgElementFactory(Q2_ATTRIBUTES));
+        svg.appendChild(svgElementFactory(Q3_ATTRIBUTES));
+        svg.appendChild(svgElementFactory(Q4_ATTRIBUTES));
+        this.#confidenceRegion95 = accessibleSvgElementFactory(CONFIDENCE_REGION_95_ATTRIBUTES);
         svg.appendChild(this.#confidenceRegion95);
-        this.#confidenceRegion80 = svgElementFactory("ellipse", {
-            style: "fill: gray; opacity: 60%"
-        });
-        this.setConfidenceRegion80({
-            visibility: "hidden"
-        });
+        this.#confidenceRegion80 = accessibleSvgElementFactory(CONFIDENCE_REGION_80_ATTRIBUTES);
         svg.appendChild(this.#confidenceRegion80);
-        this.#point = svgElementFactory("circle", {
-            fill: "black",
-            r: "2%"
-        });
-        this.setPoint({
-            visibility: "hidden"
-        });
-        svg.appendChild(this.#point);
+        this.#predictionMean = accessibleSvgElementFactory(PREDICTION_MEAN_ATTRIBUTES);
+        svg.appendChild(this.#predictionMean);
         this.attachShadow({
             mode: "open"
-        }).append(style, svg);
+        }).append(svg);
     }
     set societyWeights(societyWeights) {
         if (this.#societyWeights) {
@@ -378,40 +417,15 @@ class PoliticalCompass extends HTMLElement {
         }
         this.#economyWeights = economyWeights;
     }
-    setConfidenceRegion95({ cx ="50%" , cy ="50%" , rx ="0%" , ry ="0%" , visibility ="visible" ,  } = {}) {
-        this.#confidenceRegion95.setAttribute("cx", cx);
-        this.#confidenceRegion95.setAttribute("cy", cy);
-        this.#confidenceRegion95.setAttribute("rx", rx);
-        this.#confidenceRegion95.setAttribute("ry", ry);
-        this.#confidenceRegion95.setAttribute("visibility", visibility);
-    }
-    setConfidenceRegion80({ cx ="50%" , cy ="50%" , rx ="0%" , ry ="0%" , visibility ="visible" ,  } = {}) {
-        this.#confidenceRegion80.setAttribute("cx", cx);
-        this.#confidenceRegion80.setAttribute("cy", cy);
-        this.#confidenceRegion80.setAttribute("rx", rx);
-        this.#confidenceRegion80.setAttribute("ry", ry);
-        this.#confidenceRegion80.setAttribute("visibility", visibility);
-    }
-    setPoint({ cx ="50%" , cy ="50%" , visibility ="visible"  } = {}) {
-        this.#point.setAttribute("cx", cx);
-        this.#point.setAttribute("cy", cy);
-        this.#point.setAttribute("visibility", visibility);
-    }
     computeConfidenceRegion(texts) {
         if (!this.#societyWeights || !this.#economyWeights) {
             console.warn("One or both of the weights has not been set");
             return;
         }
         if (texts.length === 0) {
-            this.setConfidenceRegion95({
-                visibility: "hidden"
-            });
-            this.setConfidenceRegion80({
-                visibility: "hidden"
-            });
-            this.setPoint({
-                visibility: "hidden"
-            });
+            this.#confidenceRegion95.setAttribute("visibility", "hidden");
+            this.#confidenceRegion80.setAttribute("visibility", "hidden");
+            this.#predictionMean.setAttribute("visibility", "hidden");
             return;
         }
         const societyProbabilities = [];
@@ -424,33 +438,61 @@ class PoliticalCompass extends HTMLElement {
             economyProbabilities.push(economyProbability);
         }
         const societyMean = mean(societyProbabilities);
-        const cx = 100 * (1 + societyMean) / 2 + "%";
         const societyMarginOfError80 = marginOfError(societyProbabilities, 0.2);
-        const rx80 = (100 * societyMarginOfError80 || 100) + "%";
         const societyMarginOfError95 = marginOfError(societyProbabilities, 0.05);
-        const rx95 = (100 * societyMarginOfError95 || 100) + "%";
         const economyMean = mean(economyProbabilities);
-        const cy = 100 * (1 - economyMean) / 2 + "%";
         const economyMarginOfError80 = marginOfError(societyProbabilities, 0.2);
-        const ry80 = (100 * economyMarginOfError80 || 100) + "%";
         const economyMarginOfError95 = marginOfError(societyProbabilities, 0.05);
-        const ry95 = (100 * economyMarginOfError95 || 100) + "%";
-        this.setConfidenceRegion95({
-            cx,
-            cy,
-            rx: rx95,
-            ry: ry95
+        this.#renderConfidenceRegion({
+            confidenceRegion: this.#confidenceRegion80,
+            interval: "80%",
+            societyMean,
+            economyMean,
+            societyMoe: societyMarginOfError80,
+            economyMoe: economyMarginOfError80
         });
-        this.setConfidenceRegion80({
-            cx,
-            cy,
-            rx: rx80,
-            ry: ry80
+        this.#renderConfidenceRegion({
+            confidenceRegion: this.#confidenceRegion95,
+            interval: "95%",
+            societyMean,
+            economyMean,
+            societyMoe: societyMarginOfError95,
+            economyMoe: economyMarginOfError95
         });
-        this.setPoint({
-            cx,
-            cy
+        this.#setPredictionMean({
+            societyMean,
+            economyMean
         });
+    }
+     #renderConfidenceRegion({ confidenceRegion , interval , societyMean , economyMean , societyMoe , economyMoe  }) {
+        const societyLowerBound = Math.round(10 * (societyMean - societyMoe));
+        const societyUpperBound = Math.round(10 * (societyMean + societyMoe));
+        const economyLowerBound = Math.round(10 * (economyMean - economyMoe));
+        const economyUpperBound = Math.round(10 * (economyMean + economyMoe));
+        const desc = confidenceRegion.children[1];
+        desc.innerText = `Society axis ${interval} confidence interval between ${societyLowerBound} and ${societyUpperBound};\
+      economy axis ${interval} confidence interval  between ${economyLowerBound} and ${economyUpperBound}`;
+        const cx = 100 * (1 + societyMean) / 2 + "%";
+        const cy = 100 * (1 + economyMean) / 2 + "%";
+        const rx = 100 * societyMoe + "%";
+        const ry = 100 * economyMoe + "%";
+        confidenceRegion.setAttribute("cx", cx);
+        confidenceRegion.setAttribute("cy", cy);
+        confidenceRegion.setAttribute("rx", rx);
+        confidenceRegion.setAttribute("ry", ry);
+        confidenceRegion.setAttribute("visibility", "visible");
+    }
+     #setPredictionMean({ societyMean: societyMean1 , economyMean: economyMean1  }) {
+        const desc = this.#predictionMean.children[1];
+        const societyMeanPrediction = Math.round(10 * societyMean1);
+        const economyMeanPrediction = Math.round(10 * economyMean1);
+        desc.innerText = `Society mean prediction of ${societyMeanPrediction};\
+      economy axis mean prediction of ${economyMeanPrediction}`;
+        const cx = 100 * (1 + societyMean1) / 2 + "%";
+        const cy = 100 * (1 + economyMean1) / 2 + "%";
+        this.#predictionMean.setAttribute("cx", cx);
+        this.#predictionMean.setAttribute("cy", cy);
+        this.#predictionMean.setAttribute("visibility", "visible");
     }
 }
 customElements.define("political-compass", PoliticalCompass);

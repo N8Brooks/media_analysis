@@ -1,6 +1,6 @@
 /** Degrees of freedom and t distribution values for the given alpha */
 const T_DISTRIBUTION_TABLE = [
-  { i: 0, 0.2: NaN, 0.05: NaN },
+  { i: 0, 0.2: 10, 0.05: 10 }, // Imputed
   { i: 1, 0.2: 3.078, 0.05: 12.71 },
   { i: 2, 0.2: 1.886, 0.05: 4.303 },
   { i: 3, 0.2: 1.638, 0.05: 3.182 },

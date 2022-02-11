@@ -90,5 +90,5 @@ export const probability = (x: Set<number>, weights: Float32Array): number => {
   x.forEach((i) => {
     prob += weights[i];
   });
-  return Math.min(1, Math.max(-1, prob));
+  return prob;
 };
