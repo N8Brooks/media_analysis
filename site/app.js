@@ -2,13 +2,7 @@
 const politicalCompass = document.querySelector("political-compass");
 
 // Fetch society weights
-fetch("models/society_model.bin.gz")
-  .then((response) => response.blob())
-  .then((blob) => {
-    const ds = new DecompressionStream("gzip");
-    const decompressionStream = blob.stream().pipeThrough(ds);
-    return new Response(decompressionStream);
-  })
+fetch("/models/society_model.bin")
   .then((response) => response.arrayBuffer())
   .then((array) => {
     const intervalId = setInterval(() => {
@@ -21,13 +15,7 @@ fetch("models/society_model.bin.gz")
   });
 
 // Fetch economy weights
-fetch("models/economy_model.bin.gz")
-  .then((response) => response.blob())
-  .then((blob) => {
-    const ds = new DecompressionStream("gzip");
-    const decompressionStream = blob.stream().pipeThrough(ds);
-    return new Response(decompressionStream);
-  })
+fetch("/models/economy_model.bin")
   .then((response) => response.arrayBuffer())
   .then((array) => {
     const intervalId = setInterval(() => {

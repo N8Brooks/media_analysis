@@ -1,12 +1,12 @@
 const CACHE_NAME = "political_compass_0_0_0";
 
 const CONTENT = [
+  "/models/economy_model.bin",
+  "/models/society_model.bin",
   "icons/political_compass_x192.png",
   "icons/political_compass_x512.png",
   "icons/political_compass.ico",
   "icons/political_compass.svg",
-  "models/economy_model.bin.gz",
-  "models/society_model.bin.gz",
   "app.js",
   "index.html",
   "manifest.json",
