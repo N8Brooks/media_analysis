@@ -7,7 +7,6 @@ import { Prediction } from "./types.ts";
 
 // TODO: max and min of -10/10
 // TODO: separate `isBeingMoved` with mouse vs keyboard
-// TODO: try to get aria-live to work with `SVGCircleElement`
 // TODO: Update mean prediction `desc` when `#onPointerUp` is called
 // TODO: Remove usage of getBoundingClientRect by making event optional - use svg coordinates
 
@@ -17,8 +16,7 @@ const POLITICAL_COMPASS_ATTRIBUTES = {
   tagName: "svg",
   idPrefix: "political-compass",
   titleText: "Political Compass",
-  descText:
-    "Accessible visual that places samples of text on the political compass",
+  descText: "Visual that places samples of text on the political compass",
   viewBox: "-10 -10 20 20",
   role: "img",
 };
@@ -101,6 +99,9 @@ const PREDICTION_MEAN_ATTRIBUTES = {
   style: "outline: none",
 };
 
+const SCREEN_READER_ONLY_STYLE =
+  "position: absolute; height: 1px; width: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px)";
+
 /** Specifications for svg elements */
 interface SvgElementOptions {
   /** The tag name of the SVG element created */
@@ -179,6 +180,8 @@ class PoliticalCompass extends HTMLElement {
   /** Used as unique identifier for texts */
   #previousTextsHash?: number;
 
+  #screenReaderOnly: HTMLElement;
+
   constructor() {
     super();
 
@@ -190,7 +193,15 @@ class PoliticalCompass extends HTMLElement {
       this.#predictionMean,
     ] = this.#renderPoliticalCompass();
 
-    this.attachShadow({ mode: "open" }).append(this.#politicalCompass);
+    // Non-visible text to describe navigation
+    this.#screenReaderOnly = document.createElement("tspan");
+    this.#screenReaderOnly.setAttribute("style", SCREEN_READER_ONLY_STYLE);
+    this.#screenReaderOnly.setAttribute("aria-live", "polite");
+
+    this.attachShadow({ mode: "open" }).append(
+      this.#politicalCompass,
+      this.#screenReaderOnly,
+    );
   }
 
   /** Renders political the political compass and returns its components */
@@ -390,6 +401,7 @@ class PoliticalCompass extends HTMLElement {
     const desc = this.#predictionMean.children[1] as HTMLElement;
     const societyMeanPrediction = Math.round(societyMean);
     const economyMeanPrediction = Math.round(economyMean);
+    this.#screenReaderOnly.innerText = "Political compass visual updated";
     desc.innerText = `Society mean prediction of ${societyMeanPrediction};\
       economy axis mean prediction of ${economyMeanPrediction};\
       use W A S D, arrow keys, or drag to adjust this prediction`;
@@ -428,9 +440,20 @@ class PoliticalCompass extends HTMLElement {
     if (!this.#isBeingMoved) {
       return;
     }
+
     const { x, y } = this.computeSvgPoint(event);
     this.#predictionMean.setAttribute("cx", x + "");
     this.#predictionMean.setAttribute("cy", y + "");
+
+    // Update SROnly for immediate notification and desc if they come back to it
+    const desc = this.#predictionMean.children[1] as HTMLElement;
+    const societyMeanPrediction = roundThirds(x);
+    const economyMeanPrediction = roundThirds(y);
+    desc.innerText = this.#screenReaderOnly.innerText =
+      `Selecting society mean prediction of ${societyMeanPrediction};\
+      economy axis mean prediction of ${-economyMeanPrediction};\
+      use the enter key to confirm this update`;
+
     this.#moveConfidenceRegionsToThirds(x, y);
   };
 
@@ -449,6 +472,14 @@ class PoliticalCompass extends HTMLElement {
     const { x, y } = this.computeSvgPoint(event);
     this.#movePredictionMeanToThirds(x, y);
     this.#moveConfidenceRegionsToThirds(x, y);
+
+    const desc = this.#predictionMean.children[1] as HTMLElement;
+    const societyMeanPrediction = roundThirds(x);
+    const economyMeanPrediction = roundThirds(y);
+    desc.innerText = this.#screenReaderOnly.innerText =
+      `Adjusted society mean prediction to ${societyMeanPrediction};\
+      economy axis mean prediction to ${-economyMeanPrediction};\
+      use W A S D, arrow keys, or drag to adjust this prediction`;
 
     // Train society on re-classified samples
     const societyYTrue = -roundThirds(x) / 10 as 0 | Prediction; // inversed
@@ -541,18 +572,10 @@ class PoliticalCompass extends HTMLElement {
     const economyMeanPrediction = roundThirds(y);
     this.#predictionMean.setAttribute("cx", societyMeanPrediction + "");
     this.#predictionMean.setAttribute("cy", economyMeanPrediction + "");
-    const desc = this.#predictionMean.children[1] as HTMLElement;
-    desc.innerHTML =
-      `Selecting society mean prediction of ${societyMeanPrediction};\
-      economy axis mean prediction of ${-economyMeanPrediction};\
-      use the enter key to confirm this update`;
-
-    (this.#predictionMean.children[0] as HTMLElement).innerText! =
-      `Selecting society mean prediction of ${societyMeanPrediction};\
-      economy axis mean prediction of ${-economyMeanPrediction};\
-      use the enter key to confirm this update`;
-    (this.#confidenceRegion80.children[1] as HTMLElement).innerText! = "";
-    (this.#confidenceRegion95.children[1] as HTMLElement).innerText! = "";
+    (this.#confidenceRegion80.children[1] as HTMLElement).innerText =
+      "80% confidence region";
+    (this.#confidenceRegion95.children[1] as HTMLElement).innerText =
+      "95% confidence region";
   };
 
   /** Moves confidence regions to even positions */
