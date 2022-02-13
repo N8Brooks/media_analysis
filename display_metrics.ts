@@ -1,6 +1,6 @@
 import * as classifier from "./binary_classifier.ts";
 import { LOG_PRECISION } from "./constants.ts";
-import { Sample } from "./sample.ts";
+import { Sample } from "./types.ts";
 
 /** Used for metrics */
 export interface SensitivityAndSpecificity {
