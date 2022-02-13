@@ -1,9 +1,4 @@
-import {
-  assert,
-  assertEquals,
-  assertStrictEquals,
-  assertThrows,
-} from "./test_deps.ts";
+import { assert, assertEquals, assertStrictEquals } from "./test_deps.ts";
 import { marginOfError, mean, std, tLookup } from "./statistics.ts";
 
 /** Maximum absolute difference to fail a test */
