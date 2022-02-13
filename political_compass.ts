@@ -1,8 +1,9 @@
 /// <reference lib="dom" />
 
 import { vectorize } from "./vectorize.ts";
-import { probability } from "./binary_classifier.ts";
+import { partialFit, predict, probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
+import { Prediction } from "./types.ts";
 
 /** Attributes for the parent SVG element */
 const POLITICAL_COMPASS_ATTRIBUTES = {
@@ -146,20 +147,31 @@ const accessibleSvgElementFactory = (
   return element;
 };
 
-/** Rounds a number to `-10`, `0`, or `10` */
-const roundThirds = (n: number): number => {
-  return Math.max(-10, Math.min(10, 10 * Math.round(3 * n / 20)));
+/** Rounds `x` to `-10`, `0`, or `10` */
+const roundThirds = (x: number): number => {
+  return Math.max(-10, Math.min(10, 10 * Math.round(3 * x / 20)));
 };
 
 /** Updatable political compass graphic */
 class PoliticalCompass extends HTMLElement {
-  #societyWeights?: Float32Array;
-  #economyWeights?: Float32Array;
+  societyWeights?: Float32Array;
+  economyWeights?: Float32Array;
+
   #politicalCompass: SVGSVGElement;
   #predictionMean: SVGElement;
   #confidenceRegion80: SVGElement;
   #confidenceRegion95: SVGElement;
   #isBeingDragged = false;
+
+  // Prediction data for re-classification
+  #sampleFeatureVectors: Set<number>[] = [];
+  #societyPredictions: Prediction[] = [];
+  #economyPredictions: Prediction[] = [];
+  #previousSocietyWeights = new Float32Array();
+  #previousEconomyWeights = new Float32Array();
+
+  /** Used as unique identifier for texts */
+  #previousTextsHash = NaN;
 
   constructor() {
     super();
@@ -203,54 +215,72 @@ class PoliticalCompass extends HTMLElement {
     this.attachShadow({ mode: "open" }).append(this.#politicalCompass);
   }
 
-  /** Used to add society weights asynchronously */
-  set societyWeights(societyWeights: Float32Array) {
-    if (this.#societyWeights) {
-      console.warn("Society weights should only be set once");
-    }
-    this.#societyWeights = societyWeights;
-  }
-
-  /** Used to add economy weights asynchronously */
-  set economyWeights(economyWeights: Float32Array) {
-    if (this.#economyWeights) {
-      console.warn("Economy weights should only be set once");
-    }
-    this.#economyWeights = economyWeights;
-  }
-
   /** Compute the political compass confidence region for an `Array` of texts */
   computeConfidenceRegion(texts: string[]): void {
-    if (!this.#societyWeights || !this.#economyWeights) {
+    if (!this.societyWeights || !this.economyWeights) {
       console.warn("One or both of the weights has not been set");
       return;
     }
 
-    // Remove ellipse
+    // Remove ellipses and prediction mean
     if (texts.length === 0) {
+      console.warn("Cannot compute confidence with texts.length of 0");
       this.#confidenceRegion95.setAttribute("visibility", "hidden");
       this.#confidenceRegion80.setAttribute("visibility", "hidden");
       this.#predictionMean.setAttribute("visibility", "hidden");
       return;
     }
 
+    // Calculate probabilities and predictions
+    this.#sampleFeatureVectors = [];
     const societyProbabilities: number[] = [];
+    this.#societyPredictions = [];
     const economyProbabilities: number[] = [];
+    this.#economyPredictions = [];
+    let textsHash = 0;
     for (const text of texts) {
       const x = vectorize(text);
-      const societyProbability = probability(x, this.#societyWeights!);
+      this.#sampleFeatureVectors.push(x);
+
+      const societyProbability = probability(x, this.societyWeights!);
       societyProbabilities.push(societyProbability);
-      const economyProbability = probability(x, this.#economyWeights!);
+      this.#societyPredictions.push(predict(societyProbability));
+
+      const economyProbability = probability(x, this.economyWeights!);
       economyProbabilities.push(economyProbability);
+      this.#economyPredictions.push(predict(economyProbability));
+
+      x.forEach((i) => {
+        textsHash += i;
+      });
+    }
+
+    // Save references to previous weights in case of re-re-classification
+    if (textsHash !== this.#previousTextsHash) {
+      this.#previousSocietyWeights = this.societyWeights;
+      this.#previousEconomyWeights = this.economyWeights;
+      this.#previousTextsHash = textsHash;
     }
 
     const societyMean = 10 * mean(societyProbabilities);
-    const societyMoe80 = 10 * marginOfError(societyProbabilities, 0.2);
-    const societyMoe95 = 10 * marginOfError(societyProbabilities, 0.05);
+    const societyMoe80 = Math.max(
+      1.0,
+      10 * marginOfError(societyProbabilities, 0.2),
+    );
+    const societyMoe95 = Math.max(
+      1.5,
+      10 * marginOfError(societyProbabilities, 0.05),
+    );
 
     const economyMean = 10 * mean(economyProbabilities);
-    const economyMoe80 = 10 * marginOfError(societyProbabilities, 0.2);
-    const economyMoe95 = 10 * marginOfError(societyProbabilities, 0.05);
+    const economyMoe80 = Math.max(
+      1.0,
+      10 * marginOfError(economyProbabilities, 0.2),
+    );
+    const economyMoe95 = Math.max(
+      1.5,
+      10 * marginOfError(economyProbabilities, 0.05),
+    );
 
     this.#renderConfidenceRegion({
       confidenceRegion: this.#confidenceRegion80,
@@ -299,7 +329,7 @@ class PoliticalCompass extends HTMLElement {
 
     // The SVG is given using center and radiuses
     confidenceRegion.setAttribute("cx", societyMean + "");
-    confidenceRegion.setAttribute("cy", -economyMean + "");
+    confidenceRegion.setAttribute("cy", -economyMean + ""); // inversed
     confidenceRegion.setAttribute("rx", societyMoe + "");
     confidenceRegion.setAttribute("ry", economyMoe + "");
     confidenceRegion.setAttribute("visibility", "visible");
@@ -318,7 +348,7 @@ class PoliticalCompass extends HTMLElement {
 
     // The SVG is given using center
     this.#predictionMean.setAttribute("cx", societyMean + "");
-    this.#predictionMean.setAttribute("cy", -economyMean + "");
+    this.#predictionMean.setAttribute("cy", -economyMean + ""); //inversed
     this.#predictionMean.setAttribute("visibility", "visible");
   }
 
@@ -345,14 +375,51 @@ class PoliticalCompass extends HTMLElement {
 
   /** Places confidence regions and prediction mean evenly */
   #onPointerUp = (event: PointerEvent): void => {
+    console.debug("Pointer up");
+
+    // TODO: more accessability for this feature
     this.#isBeingDragged = false;
     const { x, y } = this.computeSvgPoint(event);
     this.#predictionMean.setAttribute("cx", roundThirds(x) + "");
     this.#predictionMean.setAttribute("cy", roundThirds(y) + "");
     this.#moveToThirds(x, y);
     this.#predictionMean.blur();
-    // TODO: update and cache weights
-    // TODO: more accessability for this feature
+
+    // Train society on re-classified samples
+    const societyYTrue = -roundThirds(x) / 10 as 0 | Prediction; // inversed
+    const societySamples = this.#sampleFeatureVectors.map((x, i) => {
+      const societyYHat = this.#societyPredictions[i];
+      const y = societyYTrue === 0 ? -societyYHat as Prediction : societyYTrue;
+      return { x, y, weight: 1 };
+    });
+    this.societyWeights = partialFit(
+      societySamples,
+      this.#previousSocietyWeights,
+    );
+
+    // Train economy on re-classified samples
+    const economyYTrue = roundThirds(y) / 10 as 0 | Prediction; // inversed
+    const economySamples = this.#sampleFeatureVectors.map((x, i) => {
+      const economyYHat = this.#economyPredictions[i];
+      const y = economyYTrue === 0 ? -economyYHat as Prediction : economyYTrue;
+      return { x, y, weight: 1 };
+    });
+    console.log(economyYTrue, economySamples);
+    this.economyWeights = partialFit(
+      economySamples,
+      this.#previousEconomyWeights,
+    );
+
+    // Send event to potentially save new weights
+    console.debug("Sending weightsupdate event");
+    const weightsUpdateEvent = new CustomEvent("weightsupdate", {
+      detail: {
+        societyWeights: this.societyWeights,
+        economyWeights: this.economyWeights,
+      },
+    });
+    console.log(societyYTrue, societySamples);
+    this.dispatchEvent(weightsUpdateEvent);
   };
 
   /** Moves confidence regions to even positions */

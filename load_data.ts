@@ -1,6 +1,6 @@
 import { CSV } from "./deps.ts";
 import { vectorize } from "./vectorize.ts";
-import { Sample } from "./sample.ts";
+import { Prediction, Sample } from "./types.ts";
 
 /** A row of a CSV file */
 type Row = Record<string, string>;
@@ -12,7 +12,7 @@ export const parseRecord = ({ question, text, target }: Row): Sample => {
   }
   return {
     x: vectorize(text),
-    y: +target as -1 | 1,
+    y: +target as Prediction,
     weight: +question, // temp
   };
 };

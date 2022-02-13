@@ -10,6 +10,7 @@ import {
   loadData,
   parseRecord,
 } from "./load_data.ts";
+import { Prediction } from "./types.ts";
 
 /** Maximum absolute difference to fail a test */
 const TOLERANCE = 1e-8;
@@ -18,10 +19,10 @@ const TOLERANCE = 1e-8;
 const SET: Set<number> = new Set();
 
 /** Statically typed negative binary class */
-const NEGATIVE_ONE: (-1 | 1) = -1;
+const NEGATIVE_ONE: Prediction = -1;
 
 /** Statically typed positive binary class */
-const POSITIVE_ONE: (-1 | 1) = 1;
+const POSITIVE_ONE: Prediction = 1;
 
 Deno.test("invalid row", () => {
   assertThrows(() => parseRecord({ target: "0" }));

@@ -9,3 +9,6 @@ export interface Sample {
   /** Weight applied to sample */
   weight: number;
 }
+
+/** Classes for binary classification */
+export type Prediction = -1 | 1;

@@ -1,5 +1,3 @@
-const CACHE_NAME = "political_compass_0_0_0";
-
 const CONTENT = [
   "../models/economy_model.bin",
   "../models/society_model.bin",
@@ -13,12 +11,14 @@ const CONTENT = [
   "political_compass.js",
 ];
 
+const cacheName = new URL(location).searchParams.get("cache-name");
+
 self.addEventListener("install", (event) => {
-  console.log("[Service Worker] installing service worker");
+  console.debug("Installing service worker");
   event.waitUntil(
     (async () => {
-      const cacheStorage = await caches.open(CACHE_NAME);
-      console.log("[Service Worker] caching service worker content");
+      const cacheStorage = await caches.open(cacheName);
+      console.debug("Caching service worker content");
       await cacheStorage.addAll(CONTENT);
     })(),
   );
@@ -27,16 +27,14 @@ self.addEventListener("install", (event) => {
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
-      console.log(`[Service Worker] fetching resource: ${event.request.url}`);
+      console.debug(`Fetching resource: ${event.request.url}`);
       const r = await caches.match(event.request);
       if (r) {
         return r;
       }
       const response = await fetch(event.request);
-      const cacheStorage = await caches.open(CACHE_NAME);
-      console.log(
-        `[Service Worker] caching new resource: ${event.request.url}`,
-      );
+      const cacheStorage = await caches.open(cacheName);
+      console.debug(`Caching new resource: ${event.request.url}`);
       cacheStorage.put(event.request, response.clone());
       return response;
     })(),

@@ -62,6 +62,59 @@ const vectorize = (text)=>{
     }
     return indices;
 };
+const loss = (p, y)=>{
+    const z = p * y;
+    if (z >= 1) {
+        return 0;
+    } else if (z >= -1) {
+        return (1 - z) * (1 - z);
+    } else {
+        return -4 * z;
+    }
+};
+const dLoss = (p, y)=>{
+    const z = p * y;
+    if (z >= 1) {
+        return 0;
+    } else if (z >= -1) {
+        return 2 * (1 - z) * -y;
+    } else {
+        return -4 * y;
+    }
+};
+const LEARNING_RATE = 0.001;
+const partialFit = (samples, weights)=>{
+    let beta = 0;
+    const u = weights.slice();
+    const uHat = weights.slice();
+    let sumLoss = 0;
+    for (const { x , y , weight: weight1  } of samples){
+        let p = 0;
+        x.forEach((i)=>{
+            p += u[i];
+        });
+        sumLoss += loss(p, y);
+        beta++;
+        const g = dLoss(p, y);
+        x.forEach((i)=>{
+            u[i] -= g * LEARNING_RATE * weight1;
+            uHat[i] += g * beta * LEARNING_RATE * weight1;
+        });
+    }
+    const averageLoss = (sumLoss / samples.length).toFixed(4);
+    console.info(`Partial fit - Average loss: ${averageLoss}`);
+    return u.map((weight, i)=>(weight + uHat[i]) / beta
+    );
+};
+function predict(x, weights) {
+    if (typeof x === "number") {
+        return x > 0 ? 1 : -1;
+    } else if (x instanceof Set && weights) {
+        return probability(x, weights) > 0 ? 1 : -1;
+    } else {
+        throw new RangeError(`Invalid types for predict: ${x}, ${weights}`);
+    }
+}
 const probability = (x, weights)=>{
     let prob = 0;
     x.forEach((i)=>{
@@ -382,17 +435,23 @@ const accessibleSvgElementFactory = ({ idPrefix , titleText , descText , ...attr
     element.prepend(titleElement, descElement);
     return element;
 };
-const roundThirds = (n)=>{
-    return Math.max(-10, Math.min(10, 10 * Math.round(3 * n / 20)));
+const roundThirds = (x)=>{
+    return Math.max(-10, Math.min(10, 10 * Math.round(3 * x / 20)));
 };
 class PoliticalCompass extends HTMLElement {
-    #societyWeights;
-    #economyWeights;
+    societyWeights;
+    economyWeights;
     #politicalCompass;
     #predictionMean;
     #confidenceRegion80;
     #confidenceRegion95;
     #isBeingDragged = false;
+    #sampleFeatureVectors = [];
+    #societyPredictions = [];
+    #economyPredictions = [];
+    #previousSocietyWeights = new Float32Array();
+    #previousEconomyWeights = new Float32Array();
+    #previousTextsHash = NaN;
     constructor(){
         super();
         this.#politicalCompass = accessibleSvgElementFactory(POLITICAL_COMPASS_ATTRIBUTES);
@@ -419,44 +478,48 @@ class PoliticalCompass extends HTMLElement {
             mode: "open"
         }).append(this.#politicalCompass);
     }
-    set societyWeights(societyWeights) {
-        if (this.#societyWeights) {
-            console.warn("Society weights should only be set once");
-        }
-        this.#societyWeights = societyWeights;
-    }
-    set economyWeights(economyWeights) {
-        if (this.#economyWeights) {
-            console.warn("Economy weights should only be set once");
-        }
-        this.#economyWeights = economyWeights;
-    }
     computeConfidenceRegion(texts) {
-        if (!this.#societyWeights || !this.#economyWeights) {
+        if (!this.societyWeights || !this.economyWeights) {
             console.warn("One or both of the weights has not been set");
             return;
         }
         if (texts.length === 0) {
+            console.warn("Cannot compute confidence with texts.length of 0");
             this.#confidenceRegion95.setAttribute("visibility", "hidden");
             this.#confidenceRegion80.setAttribute("visibility", "hidden");
             this.#predictionMean.setAttribute("visibility", "hidden");
             return;
         }
+        this.#sampleFeatureVectors = [];
         const societyProbabilities = [];
+        this.#societyPredictions = [];
         const economyProbabilities = [];
+        this.#economyPredictions = [];
+        let textsHash = 0;
         for (const text of texts){
             const x = vectorize(text);
-            const societyProbability = probability(x, this.#societyWeights);
+            this.#sampleFeatureVectors.push(x);
+            const societyProbability = probability(x, this.societyWeights);
             societyProbabilities.push(societyProbability);
-            const economyProbability = probability(x, this.#economyWeights);
+            this.#societyPredictions.push(predict(societyProbability));
+            const economyProbability = probability(x, this.economyWeights);
             economyProbabilities.push(economyProbability);
+            this.#economyPredictions.push(predict(economyProbability));
+            x.forEach((i)=>{
+                textsHash += i;
+            });
+        }
+        if (textsHash !== this.#previousTextsHash) {
+            this.#previousSocietyWeights = this.societyWeights;
+            this.#previousEconomyWeights = this.economyWeights;
+            this.#previousTextsHash = textsHash;
         }
         const societyMean = 10 * mean(societyProbabilities);
-        const societyMoe80 = 10 * marginOfError(societyProbabilities, 0.2);
-        const societyMoe95 = 10 * marginOfError(societyProbabilities, 0.05);
+        const societyMoe80 = Math.max(1, 10 * marginOfError(societyProbabilities, 0.2));
+        const societyMoe95 = Math.max(1.5, 10 * marginOfError(societyProbabilities, 0.05));
         const economyMean = 10 * mean(economyProbabilities);
-        const economyMoe80 = 10 * marginOfError(societyProbabilities, 0.2);
-        const economyMoe95 = 10 * marginOfError(societyProbabilities, 0.05);
+        const economyMoe80 = Math.max(1, 10 * marginOfError(economyProbabilities, 0.2));
+        const economyMoe95 = Math.max(1.5, 10 * marginOfError(economyProbabilities, 0.05));
         this.#renderConfidenceRegion({
             confidenceRegion: this.#confidenceRegion80,
             interval: "80%",
@@ -520,12 +583,45 @@ class PoliticalCompass extends HTMLElement {
         this.#moveToThirds(x, y);
     };
     #onPointerUp = (event)=>{
+        console.debug("Pointer up");
         this.#isBeingDragged = false;
-        const { x , y  } = this.computeSvgPoint(event);
-        this.#predictionMean.setAttribute("cx", roundThirds(x) + "");
-        this.#predictionMean.setAttribute("cy", roundThirds(y) + "");
-        this.#moveToThirds(x, y);
+        const { x: x1 , y: y1  } = this.computeSvgPoint(event);
+        this.#predictionMean.setAttribute("cx", roundThirds(x1) + "");
+        this.#predictionMean.setAttribute("cy", roundThirds(y1) + "");
+        this.#moveToThirds(x1, y1);
         this.#predictionMean.blur();
+        const societyYTrue = -roundThirds(x1) / 10;
+        const societySamples = this.#sampleFeatureVectors.map((x, i)=>{
+            const societyYHat = this.#societyPredictions[i];
+            const y = societyYTrue === 0 ? -societyYHat : societyYTrue;
+            return {
+                x,
+                y,
+                weight: 1
+            };
+        });
+        this.societyWeights = partialFit(societySamples, this.#previousSocietyWeights);
+        const economyYTrue = roundThirds(y1) / 10;
+        const economySamples = this.#sampleFeatureVectors.map((x, i)=>{
+            const economyYHat = this.#economyPredictions[i];
+            const y = economyYTrue === 0 ? -economyYHat : economyYTrue;
+            return {
+                x,
+                y,
+                weight: 1
+            };
+        });
+        console.log(economyYTrue, economySamples);
+        this.economyWeights = partialFit(economySamples, this.#previousEconomyWeights);
+        console.debug("Sending weightsupdate event");
+        const weightsUpdateEvent = new CustomEvent("weightsupdate", {
+            detail: {
+                societyWeights: this.societyWeights,
+                economyWeights: this.economyWeights
+            }
+        });
+        console.log(societyYTrue, societySamples);
+        this.dispatchEvent(weightsUpdateEvent);
     };
     #moveToThirds = (x, y)=>{
         const cx = roundThirds(x) + "";

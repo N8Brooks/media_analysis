@@ -6,7 +6,7 @@ import {
   seed,
   stubConsole,
 } from "./test_deps.ts";
-import { Sample } from "./sample.ts";
+import { Sample } from "./types.ts";
 
 /** Maximum absolute difference to fail a test */
 const TOLERANCE = 1e-8;
@@ -46,7 +46,7 @@ const EXPECTED_WEIGHTS = [
 ];
 
 Deno.test("fit", () => {
-  const { logs: actualLogs, restore } = stubConsole("log");
+  const { logs: actualLogs, restore } = stubConsole("info");
   seed(0);
   const test: Sample[] = [
     { x: new Set([0, 1, 2]), y: 1, weight: 1 },

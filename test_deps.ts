@@ -19,7 +19,7 @@ Math.random = () => {
 };
 
 /** Replaces console method for testing */
-export const stubConsole = (methodName: "log") => {
+export const stubConsole = (methodName: "info") => {
   const logs: string[] = [];
   const method = console[methodName];
   console[methodName] = (log: string) => {
