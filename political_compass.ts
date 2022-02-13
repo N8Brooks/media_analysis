@@ -5,6 +5,12 @@ import { partialFit, predict, probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
 import { Prediction } from "./types.ts";
 
+// TODO: max and min of -10/10
+// TODO: separate `isBeingMoved` with mouse vs keyboard
+// TODO: try to get aria-live to work with `SVGCircleElement`
+// TODO: Update mean prediction `desc` when `#onPointerUp` is called
+// TODO: Remove usage of getBoundingClientRect by making event optional - use svg coordinates
+
 /** Attributes for the parent SVG element */
 const POLITICAL_COMPASS_ATTRIBUTES = {
   tabindex: "0",
@@ -15,7 +21,6 @@ const POLITICAL_COMPASS_ATTRIBUTES = {
     "Accessible visual that places samples of text on the political compass",
   viewBox: "-10 -10 20 20",
   role: "img",
-  "aria-live": "polite",
 };
 
 /** Authoritarian left quadrant attributes */
@@ -66,7 +71,7 @@ const CONFIDENCE_REGION_95_ATTRIBUTES = {
   idPrefix: "confidence-region-95",
   titleText: "95% Confidence Interval",
   descText: "", // This will be updated
-  style: "fill: lightGray; opacity: 60%",
+  style: "fill: lightGray; opacity: 60%; outline: none",
   visibility: "hidden", // Only shown on prediction
 };
 
@@ -78,7 +83,7 @@ const CONFIDENCE_REGION_80_ATTRIBUTES = {
   idPrefix: "confidence-region-80",
   titleText: "80% Confidence Interval",
   descText: "", // This will be updated
-  style: "fill: gray; opacity: 60%",
+  style: "fill: gray; opacity: 60%; outline: none",
   visibility: "hidden", // Only shown on prediction
 };
 
@@ -91,8 +96,9 @@ const PREDICTION_MEAN_ATTRIBUTES = {
   titleText: "Prediction Mean",
   descText: "", // This will be updated
   fill: "black",
-  r: "0.5",
+  r: "1",
   visibility: "hidden", // Only shown on prediction
+  style: "outline: none",
 };
 
 /** Specifications for svg elements */
@@ -158,61 +164,99 @@ class PoliticalCompass extends HTMLElement {
   economyWeights?: Float32Array;
 
   #politicalCompass: SVGSVGElement;
-  #predictionMean: SVGElement;
-  #confidenceRegion80: SVGElement;
-  #confidenceRegion95: SVGElement;
-  #isBeingDragged = false;
+  #predictionMean: SVGCircleElement;
+  #confidenceRegion80: SVGEllipseElement;
+  #confidenceRegion95: SVGEllipseElement;
+  #isBeingMoved = false;
 
   // Prediction data for re-classification
-  #sampleFeatureVectors: Set<number>[] = [];
-  #societyPredictions: Prediction[] = [];
-  #economyPredictions: Prediction[] = [];
-  #previousSocietyWeights = new Float32Array();
-  #previousEconomyWeights = new Float32Array();
+  #sampleFeatureVectors?: Set<number>[];
+  #societyPredictions?: number[];
+  #economyPredictions?: number[];
+  #previousSocietyWeights?: Float32Array;
+  #previousEconomyWeights?: Float32Array;
 
   /** Used as unique identifier for texts */
-  #previousTextsHash = NaN;
+  #previousTextsHash?: number;
 
   constructor() {
     super();
 
-    // Parent element of the visual
-    this.#politicalCompass = accessibleSvgElementFactory(
+    //Add accessible political compass SVG visual
+    [
+      this.#politicalCompass,
+      this.#confidenceRegion95,
+      this.#confidenceRegion80,
+      this.#predictionMean,
+    ] = this.#renderPoliticalCompass();
+
+    this.attachShadow({ mode: "open" }).append(this.#politicalCompass);
+  }
+
+  /** Renders political the political compass and returns its components */
+  #renderPoliticalCompass(): [
+    SVGSVGElement,
+    SVGEllipseElement,
+    SVGEllipseElement,
+    SVGCircleElement,
+  ] {
+    const politicalCompass = accessibleSvgElementFactory(
       POLITICAL_COMPASS_ATTRIBUTES,
     ) as SVGSVGElement;
 
-    // Colorful quadrants
-    this.#politicalCompass.appendChild(svgElementFactory(Q1_ATTRIBUTES));
-    this.#politicalCompass.appendChild(svgElementFactory(Q2_ATTRIBUTES));
-    this.#politicalCompass.appendChild(svgElementFactory(Q3_ATTRIBUTES));
-    this.#politicalCompass.appendChild(svgElementFactory(Q4_ATTRIBUTES));
+    politicalCompass.appendChild(svgElementFactory(Q1_ATTRIBUTES));
+    politicalCompass.appendChild(svgElementFactory(Q2_ATTRIBUTES));
+    politicalCompass.appendChild(svgElementFactory(Q3_ATTRIBUTES));
+    politicalCompass.appendChild(svgElementFactory(Q4_ATTRIBUTES));
 
-    // Confidence regions and mean
-    this.#confidenceRegion95 = accessibleSvgElementFactory(
+    const [
+      confidenceRegion95,
+      confidenceRegion80,
+    ] = this.#renderConfidenceRegions(politicalCompass);
+
+    const predictionMean = this.#renderPredictionMean(politicalCompass);
+
+    return [
+      politicalCompass,
+      confidenceRegion95,
+      confidenceRegion80,
+      predictionMean,
+    ];
+  }
+
+  /** Renders confidence regions to the political compass */
+  #renderConfidenceRegions(
+    politicalCompass: SVGSVGElement,
+  ): [SVGEllipseElement, SVGEllipseElement] {
+    const confidenceRegion95 = accessibleSvgElementFactory(
       CONFIDENCE_REGION_95_ATTRIBUTES,
-    );
-    this.#politicalCompass.appendChild(this.#confidenceRegion95);
-    this.#confidenceRegion80 = accessibleSvgElementFactory(
+    ) as SVGEllipseElement;
+
+    politicalCompass.appendChild(confidenceRegion95);
+
+    const confidenceRegion80 = accessibleSvgElementFactory(
       CONFIDENCE_REGION_80_ATTRIBUTES,
-    );
-    this.#politicalCompass.appendChild(this.#confidenceRegion80);
-    this.#predictionMean = accessibleSvgElementFactory(
+    ) as SVGEllipseElement;
+
+    politicalCompass.appendChild(confidenceRegion80);
+
+    return [confidenceRegion95, confidenceRegion80];
+  }
+
+  /** Renders prediction mean on the political compass */
+  #renderPredictionMean(politicalCompass: SVGSVGElement): SVGCircleElement {
+    const predictionMean = accessibleSvgElementFactory(
       PREDICTION_MEAN_ATTRIBUTES,
-    );
-    this.#politicalCompass.appendChild(this.#predictionMean);
+    ) as SVGCircleElement;
 
-    // Drag events for re-classification
-    this.#predictionMean.addEventListener("pointerdown", () => {
-      this.#isBeingDragged = true;
-    });
-    this.#politicalCompass.addEventListener("pointermove", (event) => {
-      this.#onPointerMove(event);
-    });
-    this.#predictionMean.addEventListener("pointerup", (event) => {
-      this.#onPointerUp(event);
-    });
+    politicalCompass.appendChild(predictionMean);
 
-    this.attachShadow({ mode: "open" }).append(this.#politicalCompass);
+    predictionMean.addEventListener("pointerdown", this.#onPointerDown);
+    document.addEventListener("pointermove", this.#onPointerMove);
+    document.addEventListener("pointerup", this.#onPointerUp);
+    politicalCompass.addEventListener("keydown", this.#onKeyDown);
+
+    return predictionMean;
   }
 
   /** Compute the political compass confidence region for an `Array` of texts */
@@ -231,54 +275,46 @@ class PoliticalCompass extends HTMLElement {
       return;
     }
 
-    // Calculate probabilities and predictions
-    this.#sampleFeatureVectors = [];
-    const societyProbabilities: number[] = [];
-    this.#societyPredictions = [];
-    const economyProbabilities: number[] = [];
-    this.#economyPredictions = [];
-    let textsHash = 0;
-    for (const text of texts) {
-      const x = vectorize(text);
-      this.#sampleFeatureVectors.push(x);
-
-      const societyProbability = probability(x, this.societyWeights!);
-      societyProbabilities.push(societyProbability);
-      this.#societyPredictions.push(predict(societyProbability));
-
-      const economyProbability = probability(x, this.economyWeights!);
-      economyProbabilities.push(economyProbability);
-      this.#economyPredictions.push(predict(economyProbability));
-
-      x.forEach((i) => {
-        textsHash += i;
-      });
-    }
+    // Calculate probabilities
+    this.#sampleFeatureVectors = texts.map((text) => vectorize(text));
+    const societyProbabilities = this.#sampleFeatureVectors.map((x) => {
+      return probability(x, this.societyWeights!);
+    });
+    const economyProbabilities = this.#sampleFeatureVectors.map((x) => {
+      return probability(x, this.economyWeights!);
+    });
 
     // Save references to previous weights in case of re-re-classification
-    if (textsHash !== this.#previousTextsHash) {
+    const currentTextsHash = this.#computeCurrentTextsHash();
+    if (currentTextsHash !== this.#previousTextsHash) {
       this.#previousSocietyWeights = this.societyWeights;
       this.#previousEconomyWeights = this.economyWeights;
-      this.#previousTextsHash = textsHash;
+      this.#societyPredictions = societyProbabilities.map((yHat) => {
+        return predict(yHat);
+      });
+      this.#economyPredictions = economyProbabilities.map((yHat) => {
+        return predict(yHat);
+      });
+      this.#previousTextsHash = currentTextsHash;
     }
 
     const societyMean = 10 * mean(societyProbabilities);
     const societyMoe80 = Math.max(
-      1.0,
+      1.5,
       10 * marginOfError(societyProbabilities, 0.2),
     );
     const societyMoe95 = Math.max(
-      1.5,
+      2.0,
       10 * marginOfError(societyProbabilities, 0.05),
     );
 
     const economyMean = 10 * mean(economyProbabilities);
     const economyMoe80 = Math.max(
-      1.0,
+      1.5,
       10 * marginOfError(economyProbabilities, 0.2),
     );
     const economyMoe95 = Math.max(
-      1.5,
+      2.0,
       10 * marginOfError(economyProbabilities, 0.05),
     );
 
@@ -299,6 +335,17 @@ class PoliticalCompass extends HTMLElement {
       economyMoe: economyMoe95,
     });
     this.#setPredictionMean({ societyMean, economyMean });
+  }
+
+  /** Computes the not quite unique identifier of the texts */
+  #computeCurrentTextsHash(): number {
+    let textsHash = 0;
+    this.#sampleFeatureVectors!.forEach((x) => {
+      x.forEach((i) => {
+        textsHash += i;
+      });
+    });
+    return textsHash;
   }
 
   /** Update the svg ellipse representing the 95% confidence region */
@@ -344,7 +391,8 @@ class PoliticalCompass extends HTMLElement {
     const societyMeanPrediction = Math.round(societyMean);
     const economyMeanPrediction = Math.round(economyMean);
     desc.innerText = `Society mean prediction of ${societyMeanPrediction};\
-      economy axis mean prediction of ${economyMeanPrediction}`;
+      economy axis mean prediction of ${economyMeanPrediction};\
+      use W A S D, arrow keys, or drag to adjust this prediction`;
 
     // The SVG is given using center
     this.#predictionMean.setAttribute("cx", societyMean + "");
@@ -352,7 +400,15 @@ class PoliticalCompass extends HTMLElement {
     this.#predictionMean.setAttribute("visibility", "visible");
   }
 
-  /** Returns the svg coordinates for a `PointerEvent` */
+  /** Returns the center dom coordinates of the mean prediction point */
+  #computeMeanPredictionPoint(): { clientX: number; clientY: number } {
+    const bounds = this.#predictionMean.getBoundingClientRect();
+    const clientX = bounds.x + bounds.width / 2;
+    const clientY = bounds.y + bounds.height / 2;
+    return { clientX, clientY };
+  }
+
+  /** Returns the SVG coordinates for a `PointerEvent` */
   computeSvgPoint(event: PointerEvent): DOMPoint {
     const domPoint = this.#politicalCompass.createSVGPoint();
     domPoint.x = event.clientX;
@@ -362,52 +418,60 @@ class PoliticalCompass extends HTMLElement {
     return svgPoint;
   }
 
+  /** Used when beginning to drag prediction mean */
+  #onPointerDown = (): void => {
+    this.#isBeingMoved = true;
+  };
+
   /** Places confidence regions evenly and prediction mean follows cursor */
   #onPointerMove = (event: PointerEvent): void => {
-    if (!this.#isBeingDragged) {
+    if (!this.#isBeingMoved) {
       return;
     }
     const { x, y } = this.computeSvgPoint(event);
     this.#predictionMean.setAttribute("cx", x + "");
     this.#predictionMean.setAttribute("cy", y + "");
-    this.#moveToThirds(x, y);
+    this.#moveConfidenceRegionsToThirds(x, y);
   };
 
   /** Places confidence regions and prediction mean evenly */
   #onPointerUp = (event: PointerEvent): void => {
-    console.debug("Pointer up");
+    if (!this.#isBeingMoved) {
+      return;
+    }
 
-    // TODO: more accessability for this feature
-    this.#isBeingDragged = false;
+    console.debug("Placing new prediction mean");
+
+    // End drag
+    this.#isBeingMoved = false;
+
+    // Adjust user interface
     const { x, y } = this.computeSvgPoint(event);
-    this.#predictionMean.setAttribute("cx", roundThirds(x) + "");
-    this.#predictionMean.setAttribute("cy", roundThirds(y) + "");
-    this.#moveToThirds(x, y);
-    this.#predictionMean.blur();
+    this.#movePredictionMeanToThirds(x, y);
+    this.#moveConfidenceRegionsToThirds(x, y);
 
     // Train society on re-classified samples
     const societyYTrue = -roundThirds(x) / 10 as 0 | Prediction; // inversed
-    const societySamples = this.#sampleFeatureVectors.map((x, i) => {
-      const societyYHat = this.#societyPredictions[i];
+    const societySamples = this.#sampleFeatureVectors!.map((x, i) => {
+      const societyYHat = this.#societyPredictions![i];
       const y = societyYTrue === 0 ? -societyYHat as Prediction : societyYTrue;
       return { x, y, weight: 1 };
     });
     this.societyWeights = partialFit(
       societySamples,
-      this.#previousSocietyWeights,
+      this.#previousSocietyWeights!,
     );
 
     // Train economy on re-classified samples
     const economyYTrue = roundThirds(y) / 10 as 0 | Prediction; // inversed
-    const economySamples = this.#sampleFeatureVectors.map((x, i) => {
-      const economyYHat = this.#economyPredictions[i];
+    const economySamples = this.#sampleFeatureVectors!.map((x, i) => {
+      const economyYHat = this.#economyPredictions![i];
       const y = economyYTrue === 0 ? -economyYHat as Prediction : economyYTrue;
       return { x, y, weight: 1 };
     });
-    console.log(economyYTrue, economySamples);
     this.economyWeights = partialFit(
       economySamples,
-      this.#previousEconomyWeights,
+      this.#previousEconomyWeights!,
     );
 
     // Send event to potentially save new weights
@@ -418,12 +482,81 @@ class PoliticalCompass extends HTMLElement {
         economyWeights: this.economyWeights,
       },
     });
-    console.log(societyYTrue, societySamples);
     this.dispatchEvent(weightsUpdateEvent);
   };
 
+  /** Used as alternative to dragging prediction mean */
+  #onKeyDown = (keyboardEvent: KeyboardEvent): void => {
+    // Casts the KeyboardEvent to a PointerEvent
+    let cx = +this.#predictionMean.getAttribute("cx")!;
+    let cy = +this.#predictionMean.getAttribute("cy")!;
+    switch (keyboardEvent.key) {
+      case "Up":
+      case "ArrowUp":
+      case "W":
+      case "w":
+        cy -= 10;
+        break;
+      case "Left":
+      case "ArrowLeft":
+      case "A":
+      case "a":
+        cx -= 10;
+        break;
+      case "Down":
+      case "ArrowDown":
+      case "S":
+      case "s":
+        cy += 10;
+        break;
+      case "Right":
+      case "ArrowRight":
+      case "D":
+      case "d":
+        cx += 10;
+        break;
+      case "Enter": {
+        const pointerEvent = new PointerEvent(
+          "pointerup",
+          this.#computeMeanPredictionPoint(),
+        );
+        this.#onPointerUp(pointerEvent);
+        return;
+      }
+      default:
+        return;
+    }
+    this.#isBeingMoved = true;
+    this.#movePredictionMeanToThirds(cx, cy);
+    const pointerEvent = new PointerEvent(
+      "pointermove",
+      this.#computeMeanPredictionPoint(),
+    );
+    this.#onPointerMove(pointerEvent);
+  };
+
+  /** Moves prediction mean to even position */
+  #movePredictionMeanToThirds = (x: number, y: number): void => {
+    const societyMeanPrediction = roundThirds(x);
+    const economyMeanPrediction = roundThirds(y);
+    this.#predictionMean.setAttribute("cx", societyMeanPrediction + "");
+    this.#predictionMean.setAttribute("cy", economyMeanPrediction + "");
+    const desc = this.#predictionMean.children[1] as HTMLElement;
+    desc.innerHTML =
+      `Selecting society mean prediction of ${societyMeanPrediction};\
+      economy axis mean prediction of ${-economyMeanPrediction};\
+      use the enter key to confirm this update`;
+
+    (this.#predictionMean.children[0] as HTMLElement).innerText! =
+      `Selecting society mean prediction of ${societyMeanPrediction};\
+      economy axis mean prediction of ${-economyMeanPrediction};\
+      use the enter key to confirm this update`;
+    (this.#confidenceRegion80.children[1] as HTMLElement).innerText! = "";
+    (this.#confidenceRegion95.children[1] as HTMLElement).innerText! = "";
+  };
+
   /** Moves confidence regions to even positions */
-  #moveToThirds = (x: number, y: number): void => {
+  #moveConfidenceRegionsToThirds = (x: number, y: number): void => {
     const cx = roundThirds(x) + "";
     const cy = roundThirds(y) + "";
     this.#confidenceRegion80.setAttribute("cx", cx);
