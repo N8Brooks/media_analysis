@@ -5,11 +5,6 @@ import { partialFit, predict, probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
 import { Prediction } from "./types.ts";
 
-// TODO: max and min of -10/10
-// TODO: separate `isBeingMoved` with mouse vs keyboard
-// TODO: Update mean prediction `desc` when `#onPointerUp` is called
-// TODO: Remove usage of getBoundingClientRect by making event optional - use svg coordinates
-
 /** Attributes for the parent SVG element */
 const POLITICAL_COMPASS_ATTRIBUTES = {
   tabindex: "0",
@@ -168,7 +163,8 @@ class PoliticalCompass extends HTMLElement {
   #predictionMean: SVGCircleElement;
   #confidenceRegion80: SVGEllipseElement;
   #confidenceRegion95: SVGEllipseElement;
-  #isBeingMoved = false;
+
+  #isBeingMovedByMouse = false;
 
   // Prediction data for re-classification
   #sampleFeatureVectors?: Set<number>[];
@@ -309,7 +305,11 @@ class PoliticalCompass extends HTMLElement {
       this.#previousTextsHash = currentTextsHash;
     }
 
-    const societyMean = 10 * mean(societyProbabilities);
+    // Society statistics
+    const societyMean = Math.min(
+      10,
+      Math.max(-10, 10 * mean(societyProbabilities)),
+    );
     const societyMoe80 = Math.max(
       1.5,
       10 * marginOfError(societyProbabilities, 0.2),
@@ -319,7 +319,11 @@ class PoliticalCompass extends HTMLElement {
       10 * marginOfError(societyProbabilities, 0.05),
     );
 
-    const economyMean = 10 * mean(economyProbabilities);
+    // Economy statistics
+    const economyMean = Math.min(
+      10,
+      Math.max(-10, 10 * mean(economyProbabilities)),
+    );
     const economyMoe80 = Math.max(
       1.5,
       10 * marginOfError(economyProbabilities, 0.2),
@@ -412,32 +416,31 @@ class PoliticalCompass extends HTMLElement {
     this.#predictionMean.setAttribute("visibility", "visible");
   }
 
-  /** Returns the center dom coordinates of the mean prediction point */
-  #computeMeanPredictionPoint(): { clientX: number; clientY: number } {
-    const bounds = this.#predictionMean.getBoundingClientRect();
-    const clientX = bounds.x + bounds.width / 2;
-    const clientY = bounds.y + bounds.height / 2;
-    return { clientX, clientY };
-  }
-
   /** Returns the SVG coordinates for a `PointerEvent` */
-  computeSvgPoint(event: PointerEvent): DOMPoint {
-    const domPoint = this.#politicalCompass.createSVGPoint();
-    domPoint.x = event.clientX;
-    domPoint.y = event.clientY;
-    const domMatrix = this.#politicalCompass.getScreenCTM()!.inverse();
-    const svgPoint = domPoint.matrixTransform(domMatrix);
-    return svgPoint;
+  computeSvgPoint(event?: PointerEvent): DOMPoint {
+    if (event) {
+      const domPoint = this.#politicalCompass.createSVGPoint();
+      domPoint.x = event.clientX;
+      domPoint.y = event.clientY;
+      const domMatrix = this.#politicalCompass.getScreenCTM()!.inverse();
+      const svgPoint = domPoint.matrixTransform(domMatrix);
+      return svgPoint;
+    } else {
+      const svgPoint = this.#politicalCompass.createSVGPoint();
+      svgPoint.x = +this.#predictionMean.getAttribute("cx")!;
+      svgPoint.y = +this.#predictionMean.getAttribute("cy")!;
+      return svgPoint;
+    }
   }
 
   /** Used when beginning to drag prediction mean */
   #onPointerDown = (): void => {
-    this.#isBeingMoved = true;
+    this.#isBeingMovedByMouse = true;
   };
 
   /** Places confidence regions evenly and prediction mean follows cursor */
   #onPointerMove = (event: PointerEvent): void => {
-    if (!this.#isBeingMoved) {
+    if (!this.#isBeingMovedByMouse) {
       return;
     }
 
@@ -452,21 +455,20 @@ class PoliticalCompass extends HTMLElement {
     desc.innerText = this.#screenReaderOnly.innerText =
       `Selecting society mean prediction of ${societyMeanPrediction};\
       economy axis mean prediction of ${-economyMeanPrediction};\
-      use the enter key to confirm this update`;
+      release pointer to select this adjustment`;
 
     this.#moveConfidenceRegionsToThirds(x, y);
   };
 
   /** Places confidence regions and prediction mean evenly */
-  #onPointerUp = (event: PointerEvent): void => {
-    if (!this.#isBeingMoved) {
+  #onPointerUp = (event?: PointerEvent): void => {
+    const isBeingMovedByKeyBoard = !event;
+    if (!this.#isBeingMovedByMouse && !isBeingMovedByKeyBoard) {
       return;
     }
+    this.#isBeingMovedByMouse = false;
 
     console.debug("Placing new prediction mean");
-
-    // End drag
-    this.#isBeingMoved = false;
 
     // Adjust user interface
     const { x, y } = this.computeSvgPoint(event);
@@ -546,24 +548,12 @@ class PoliticalCompass extends HTMLElement {
       case "d":
         cx += 10;
         break;
-      case "Enter": {
-        const pointerEvent = new PointerEvent(
-          "pointerup",
-          this.#computeMeanPredictionPoint(),
-        );
-        this.#onPointerUp(pointerEvent);
-        return;
-      }
       default:
         return;
     }
-    this.#isBeingMoved = true;
-    this.#movePredictionMeanToThirds(cx, cy);
-    const pointerEvent = new PointerEvent(
-      "pointermove",
-      this.#computeMeanPredictionPoint(),
-    );
-    this.#onPointerMove(pointerEvent);
+    this.#predictionMean.setAttribute("cx", cx + "");
+    this.#predictionMean.setAttribute("cy", cy + "");
+    this.#onPointerUp();
   };
 
   /** Moves prediction mean to even position */

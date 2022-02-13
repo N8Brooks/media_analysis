@@ -446,7 +446,7 @@ class PoliticalCompass extends HTMLElement {
     #predictionMean;
     #confidenceRegion80;
     #confidenceRegion95;
-    #isBeingMoved = false;
+    #isBeingMovedByMouse = false;
     #sampleFeatureVectors;
     #societyPredictions;
     #economyPredictions;
@@ -530,10 +530,10 @@ class PoliticalCompass extends HTMLElement {
             });
             this.#previousTextsHash = currentTextsHash;
         }
-        const societyMean = 10 * mean(societyProbabilities);
+        const societyMean = Math.min(10, Math.max(-10, 10 * mean(societyProbabilities)));
         const societyMoe80 = Math.max(1.5, 10 * marginOfError(societyProbabilities, 0.2));
         const societyMoe95 = Math.max(2, 10 * marginOfError(societyProbabilities, 0.05));
-        const economyMean = 10 * mean(economyProbabilities);
+        const economyMean = Math.min(10, Math.max(-10, 10 * mean(economyProbabilities)));
         const economyMoe80 = Math.max(1.5, 10 * marginOfError(economyProbabilities, 0.2));
         const economyMoe95 = Math.max(2, 10 * marginOfError(economyProbabilities, 0.05));
         this.#renderConfidenceRegion({
@@ -592,28 +592,26 @@ class PoliticalCompass extends HTMLElement {
         this.#predictionMean.setAttribute("cy", -economyMean1 + "");
         this.#predictionMean.setAttribute("visibility", "visible");
     }
-     #computeMeanPredictionPoint() {
-        const bounds = this.#predictionMean.getBoundingClientRect();
-        const clientX = bounds.x + bounds.width / 2;
-        const clientY = bounds.y + bounds.height / 2;
-        return {
-            clientX,
-            clientY
-        };
-    }
     computeSvgPoint(event) {
-        const domPoint = this.#politicalCompass.createSVGPoint();
-        domPoint.x = event.clientX;
-        domPoint.y = event.clientY;
-        const domMatrix = this.#politicalCompass.getScreenCTM().inverse();
-        const svgPoint = domPoint.matrixTransform(domMatrix);
-        return svgPoint;
+        if (event) {
+            const domPoint = this.#politicalCompass.createSVGPoint();
+            domPoint.x = event.clientX;
+            domPoint.y = event.clientY;
+            const domMatrix = this.#politicalCompass.getScreenCTM().inverse();
+            const svgPoint = domPoint.matrixTransform(domMatrix);
+            return svgPoint;
+        } else {
+            const svgPoint = this.#politicalCompass.createSVGPoint();
+            svgPoint.x = +this.#predictionMean.getAttribute("cx");
+            svgPoint.y = +this.#predictionMean.getAttribute("cy");
+            return svgPoint;
+        }
     }
     #onPointerDown = ()=>{
-        this.#isBeingMoved = true;
+        this.#isBeingMovedByMouse = true;
     };
     #onPointerMove = (event)=>{
-        if (!this.#isBeingMoved) {
+        if (!this.#isBeingMovedByMouse) {
             return;
         }
         const { x , y  } = this.computeSvgPoint(event);
@@ -624,15 +622,16 @@ class PoliticalCompass extends HTMLElement {
         const economyMeanPrediction = roundThirds(y);
         desc.innerText = this.#screenReaderOnly.innerText = `Selecting society mean prediction of ${societyMeanPrediction};\
       economy axis mean prediction of ${-economyMeanPrediction};\
-      use the enter key to confirm this update`;
+      release pointer to select this adjustment`;
         this.#moveConfidenceRegionsToThirds(x, y);
     };
     #onPointerUp = (event)=>{
-        if (!this.#isBeingMoved) {
+        const isBeingMovedByKeyBoard = !event;
+        if (!this.#isBeingMovedByMouse && !isBeingMovedByKeyBoard) {
             return;
         }
+        this.#isBeingMovedByMouse = false;
         console.debug("Placing new prediction mean");
-        this.#isBeingMoved = false;
         const { x: x1 , y: y1  } = this.computeSvgPoint(event);
         this.#movePredictionMeanToThirds(x1, y1);
         this.#moveConfidenceRegionsToThirds(x1, y1);
@@ -701,19 +700,12 @@ class PoliticalCompass extends HTMLElement {
             case "d":
                 cx += 10;
                 break;
-            case "Enter":
-                {
-                    const pointerEvent = new PointerEvent("pointerup", this.#computeMeanPredictionPoint());
-                    this.#onPointerUp(pointerEvent);
-                    return;
-                }
             default:
                 return;
         }
-        this.#isBeingMoved = true;
-        this.#movePredictionMeanToThirds(cx, cy);
-        const pointerEvent = new PointerEvent("pointermove", this.#computeMeanPredictionPoint());
-        this.#onPointerMove(pointerEvent);
+        this.#predictionMean.setAttribute("cx", cx + "");
+        this.#predictionMean.setAttribute("cy", cy + "");
+        this.#onPointerUp();
     };
     #movePredictionMeanToThirds = (x, y)=>{
         const societyMeanPrediction = roundThirds(x);
