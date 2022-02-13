@@ -38,7 +38,7 @@ fetch("../models/economy_model.bin")
 const politicalText = document.querySelector("textarea");
 document.querySelector("form").addEventListener("submit", (event) => {
   event.preventDefault();
-  const texts = politicalText.value.split(/\w+\n\w+\n\w+/gu);
+  const texts = politicalText.value.split(/\w*\n\w*\n\w*/gu);
   politicalCompass.computeConfidenceRegion(texts);
 });
 
