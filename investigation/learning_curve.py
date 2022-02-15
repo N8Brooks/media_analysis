@@ -98,11 +98,11 @@ def plot_learning_curve(
 
     train_sizes, train_scores, test_scores, fit_times, _ = learning_curve(
         estimator,
-        dataset['text'],
-        dataset['target'],
+        dataset["text"],
+        dataset["target"],
         cv=cv,
         n_jobs=n_jobs,
-        scoring='f1_weighted',
+        scoring="f1_weighted",
         train_sizes=train_sizes,
         return_times=True,
     )
@@ -171,23 +171,23 @@ def plot_learning_curve(
 
 
 # Society or economy axis
-AXIS = 'society'
+AXIS = "society"
 
-dataset = pd.read_csv(f'../datasets/{AXIS}_train.csv')
+dataset = pd.read_csv(f"../datasets/{AXIS}_train.csv")
 
 fig, axes = plt.subplots(3, 2, figsize=(10, 15))
 
 # Estimator
 
 hashingvectorizer = HashingVectorizer(
-    decode_error='ignore',
-    strip_accents='unicode',
+    decode_error="ignore",
+    strip_accents="unicode",
     lowercase=True,
     stop_words=None,
     preprocessor=None,
     ngram_range=(1, 1),
     norm=None,
-    n_features=2**16,
+    n_features=2 ** 16,
     binary=True,
     alternate_sign=False,
     dtype=np.float32,
@@ -195,59 +195,36 @@ hashingvectorizer = HashingVectorizer(
 
 sgdclassifier = SGDClassifier(
     alpha=1e-6,
-    class_weight='balanced',
+    class_weight="balanced",
     fit_intercept=False,
-    loss='modified_huber',
-    learning_rate='constant',
+    loss="modified_huber",
+    learning_rate="constant",
     average=True,
-    1e-3,
+    eta0=1e-3,
     tol=1e-4,
 )
 
 sgd_pipeline = make_pipeline(hashingvectorizer, sgdclassifier)
 
-sgd_cv = StratifiedShuffleSplit(
-    n_splits=50,
-    test_size=1000,
-)
+sgd_cv = StratifiedShuffleSplit(n_splits=50, test_size=1000)
 
 plot_learning_curve(
-    sgd_pipeline,
-    'ASGD',
-    dataset,
-    axes=axes[:, 0],
-    cv=sgd_cv,
-    n_jobs=-1,
+    sgd_pipeline, "ASGD", dataset, axes=axes[:, 0], cv=sgd_cv, n_jobs=-1
 )
 
 # Alternative estimator for comparison
 # This estimator is not limited to the same criteria
 
 tfidfvectorizer = TfidfVectorizer(
-    decode_error='ignore',
-    strip_accents='unicode',
-    lowercase=True,
-    ngram_range=(1, 1),
+    decode_error="ignore", strip_accents="unicode", lowercase=True, ngram_range=(1, 1)
 )
 
-linearsvc = LinearSVC(
-    class_weight='balanced',
-)
+linearsvc = LinearSVC(class_weight="balanced")
 
 svc_pipeline = make_pipeline(tfidfvectorizer, linearsvc)
 
-svc_cv = StratifiedShuffleSplit(
-    n_splits=50,
-    test_size=1000,
-)
+svc_cv = StratifiedShuffleSplit(n_splits=50, test_size=1000)
 
-plot_learning_curve(
-    svc_pipeline,
-    'SVC',
-    dataset,
-    axes=axes[:, 1],
-    cv=svc_cv,
-    n_jobs=-1,
-)
+plot_learning_curve(svc_pipeline, "SVC", dataset, axes=axes[:, 1], cv=svc_cv, n_jobs=-1)
 
 plt.show()
