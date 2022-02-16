@@ -81,7 +81,10 @@ Deno.test("load economy train", async () => {
   const expectedWeight = 3.4276556776556775;
   const weightDiff = Math.abs(actual.weight - expectedWeight);
   assert(weightDiff < TOLERANCE);
-  const expectedX = new Set([35623, 42571, 55225]);
+  const expectedX = new Set([
+    232231,
+    247343,
+  ]);
   assertEquals(actual.x, expectedX);
   const expectedY = -1;
   assertStrictEquals(actual.y, expectedY);
@@ -95,26 +98,21 @@ Deno.test("load economy test", async () => {
   const weightDiff = Math.abs(actual.weight - expectedWeight);
   assert(weightDiff < TOLERANCE);
   const expectedX = new Set([
-    45022,
+    121534,
+    147817,
+    164116,
+    198032,
+    210964,
+    219679,
+    221560,
+    22270,
+    22531,
+    261037,
     46353,
-    50038,
-    31044,
-    45119,
-    31052,
-    13677,
-    64076,
-    35356,
-    13708,
-    33044,
-    16083,
-    8877,
-    17806,
-    1826,
-    49096,
-    38045,
-    34070,
-    39402,
-    63879,
+    60975,
+    67362,
+    83342,
+    86216,
   ]);
   assertEquals(actual.x, expectedX);
   const expectedY = -1;
@@ -124,15 +122,52 @@ Deno.test("load economy test", async () => {
 
 Deno.test("load society train", async () => {
   const societyTrain = await loadData("datasets/society_train.csv");
-  const actual = societyTrain[6138];
-  const expectedWeight = 1.459814814814815;
+  const actual = societyTrain[6137];
+  const expectedWeight = 1.4694258016405668;
   const weightDiff = Math.abs(actual.weight - expectedWeight);
   assert(weightDiff < TOLERANCE);
-  const expectedX = new Set([38525, 16083]);
+  const expectedX = new Set([
+    114268,
+    137691,
+    14201,
+    144659,
+    147340,
+    150042,
+    152588,
+    154746,
+    157063,
+    157767,
+    166307,
+    185958,
+    189894,
+    199107,
+    202415,
+    208995,
+    21719,
+    220043,
+    22218,
+    226399,
+    228212,
+    228245,
+    231159,
+    250729,
+    261764,
+    33186,
+    38356,
+    49893,
+    50476,
+    72745,
+    75725,
+    79266,
+    88248,
+    95007,
+    97656,
+    98358,
+  ]);
   assertEquals(actual.x, expectedX);
   const expectedY = 1;
   assertStrictEquals(actual.y, expectedY);
-  assertStrictEquals(societyTrain.length, 15766);
+  assertStrictEquals(societyTrain.length, 15764);
 });
 
 Deno.test("load society test", async () => {
@@ -142,38 +177,24 @@ Deno.test("load society test", async () => {
   const weightDiff = Math.abs(actual.weight - expectedWeight);
   assert(weightDiff < TOLERANCE);
   const expectedX = new Set([
-    61593,
-    53424,
-    52516,
-    43099,
-    26,
-    20419,
-    61755,
-    57478,
-    23005,
-    40802,
-    46342,
-    40652,
-    9671,
-    5530,
-    22014,
-    5853,
-    16083,
-    40776,
-    7731,
-    53154,
-    48317,
+    100044,
+    116796,
+    127129,
+    131098,
+    144349,
+    148481,
+    179389,
+    202138,
+    204339,
+    21398,
+    228212,
+    256769,
+    258363,
     42855,
-    20780,
-    31604,
-    13677,
-    36433,
-    31618,
-    8564,
-    13472,
-    60161,
-    2170,
-    51260,
+    67706,
+    71389,
+    79008,
+    9671,
   ]);
   assertEquals(actual.x, expectedX);
   const expectedY = 1;

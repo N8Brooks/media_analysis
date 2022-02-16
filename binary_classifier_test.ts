@@ -11,38 +11,38 @@ import { Sample } from "./types.ts";
 /** Maximum absolute difference to fail a test */
 const TOLERANCE = 1e-8;
 
-/** The average loss messages from fitting */
-const EXPECTED_LOGS = [
-  "Epoch 0 - Average loss: 1.0000",
-  "Epoch 1 - Average loss: 0.9880",
-  "Epoch 2 - Average loss: 0.9762",
-  "Epoch 3 - Average loss: 0.9645",
-  "Epoch 4 - Average loss: 0.9530",
-  "Epoch 5 - Average loss: 0.9416",
-  "Epoch 6 - Average loss: 0.9303",
-  "Epoch 7 - Average loss: 0.9192",
-  "Epoch 8 - Average loss: 0.9082",
-  "Epoch 9 - Average loss: 0.8973",
-  "Epoch 10 - Average loss: 0.8866",
-  "Epoch 11 - Average loss: 0.8760",
-  "Epoch 12 - Average loss: 0.8655",
-  "Epoch 13 - Average loss: 0.8552",
-  "Epoch 14 - Average loss: 0.8449",
-  "Epoch 15 - Average loss: 0.8348",
+/** First 10 expected classifier weights for fit */
+const FIT_EXPECTED_WEIGHTS = [
+  0.49234145879745483,
+  0.49234145879745483,
+  0.49234145879745483,
+  0.443408340215683,
+  0.443408340215683,
+  0.443408340215683,
+  0.443408340215683,
+  0.5867238640785217,
+  0.5867238640785217,
+  0,
 ];
 
-/** First 10 expected classifier weights */
-const EXPECTED_WEIGHTS = [
-  0.015860844403505325,
-  0.015860844403505325,
-  0.015860844403505325,
-  0.015741802752017975,
-  0.015741802752017975,
-  0.015741802752017975,
-  0.015986517071723938,
-  0.015986517071723938,
-  0.015986517071723938,
-  0,
+/** The average loss messages from fitting */
+const FIT_EXPECTED_LOGS = [
+  "Epoch 0 - Average loss: 1.0000",
+  "Epoch 1 - Average loss: 0.4338",
+  "Epoch 2 - Average loss: 0.1922",
+  "Epoch 3 - Average loss: 0.0869",
+  "Epoch 4 - Average loss: 0.0400",
+  "Epoch 5 - Average loss: 0.0188",
+  "Epoch 6 - Average loss: 0.0089",
+  "Epoch 7 - Average loss: 0.0043",
+  "Epoch 8 - Average loss: 0.0021",
+  "Epoch 9 - Average loss: 0.0010",
+  "Epoch 10 - Average loss: 0.0005",
+  "Epoch 11 - Average loss: 0.0003",
+  "Epoch 12 - Average loss: 0.0001",
+  "Epoch 13 - Average loss: 0.0001",
+  "Epoch 14 - Average loss: 0.0000",
+  "Epoch 15 - Average loss: 0.0000",
 ];
 
 Deno.test("fit", () => {
@@ -50,15 +50,15 @@ Deno.test("fit", () => {
   seed(0);
   const test: Sample[] = [
     { x: new Set([0, 1, 2]), y: 1, weight: 1 },
-    { x: new Set([3, 4, 5]), y: 1, weight: 1 },
-    { x: new Set([6, 7, 8]), y: 1, weight: 1 },
+    { x: new Set([3, 4, 5, 6]), y: 1, weight: 1 },
+    { x: new Set([7, 8]), y: 1, weight: 1 },
   ];
   const actual = classifier.fit(test);
-  EXPECTED_WEIGHTS.forEach((expectedI, i) => {
+  FIT_EXPECTED_WEIGHTS.forEach((expectedI, i) => {
     const absoluteDifference = Math.abs(actual[i] - expectedI);
     assert(absoluteDifference < TOLERANCE);
   });
-  assertEquals(actualLogs, EXPECTED_LOGS);
+  assertEquals(actualLogs, FIT_EXPECTED_LOGS);
   restore();
 });
 
@@ -78,4 +78,49 @@ Deno.test("predict", () => {
   const actual = classifier.predict(x, weights);
   const expected = 1;
   assertStrictEquals(actual, expected);
+});
+
+Deno.test("predict negative", () => {
+  assertStrictEquals(classifier.predict(-3), -1);
+});
+
+Deno.test("predict positive", () => {
+  assertStrictEquals(classifier.predict(0.01), 1);
+});
+
+/** First 10 expected classifier weights for partial fit */
+const PARTIAL_FIT_EXPECTED_WEIGHTS = [
+  0,
+  0,
+  0,
+  -0.06666667014360428,
+  0,
+  -0.06666667014360428,
+  -0.13333334028720856,
+  0,
+  0,
+  0,
+];
+
+/** Average loss over partial fit epoch */
+const PARTIAL_FIT_EXPECTED_LOGS = [
+  "Partial fit - Average loss: 1.0000",
+];
+
+Deno.test("partial fit", () => {
+  const { logs: actualLogs, restore } = stubConsole("info");
+  seed(0);
+  const test: Sample[] = [
+    { x: new Set([0, 2]), y: 1, weight: 1 },
+    { x: new Set([3, 5]), y: 1, weight: 1 },
+    { x: new Set([6]), y: 1, weight: 1 },
+  ];
+  const weights = new Float32Array(256);
+  const actual = classifier.partialFit(test, weights);
+  PARTIAL_FIT_EXPECTED_WEIGHTS.forEach((expectedI, i) => {
+    const absoluteDifference = Math.abs(actual[i] - expectedI);
+    assert(absoluteDifference < TOLERANCE);
+  });
+  assertEquals(actualLogs, PARTIAL_FIT_EXPECTED_LOGS);
+  restore();
 });

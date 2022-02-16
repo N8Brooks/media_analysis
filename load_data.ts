@@ -48,7 +48,11 @@ export const balanceClasses = (data: Sample[]): Sample[] => {
 export const loadData = async (filename: string): Promise<Sample[]> => {
   const text = await Deno.readTextFile(filename);
   const csv = await CSV.parse(text, { skipFirstRow: true }) as Row[];
-  const data = csv.map((record) => parseRecord(record)); // Weight is actually question
-  const samples = balanceClasses(data); // Re-named to show weight is now weight
+  // Weight is actually question
+  const data = csv
+    .map((record) => parseRecord(record))
+    .filter((record) => record.x.size);
+  // Re-named to show weight is now weight
+  const samples = balanceClasses(data);
   return samples;
 };

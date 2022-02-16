@@ -20,11 +20,11 @@ if (axis !== "society" && axis != "economy") {
 
 // Train model
 const train = await loadData(`datasets/${axis}_train.csv`);
-console.log(`Training on ${axis} axis dataset`);
+console.info(`Training on ${axis} axis dataset`);
 const weights = classifier.fit(train);
 
 // Test model
-console.log(`Testing on ${axis} axis dataset`);
+console.info(`Testing on ${axis} axis dataset`);
 const test = await loadData(`datasets/${axis}_test.csv`);
 displayMetrics(test, weights);
 

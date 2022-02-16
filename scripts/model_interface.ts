@@ -17,5 +17,5 @@ while (true) {
   const x = vectorize(text);
   const societyProbability = classifier.probability(x, societyWeights);
   const economyProbability = classifier.probability(x, economyWeights);
-  console.log([societyProbability, economyProbability]);
+  console.info([societyProbability, economyProbability]);
 }

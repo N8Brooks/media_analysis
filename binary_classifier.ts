@@ -13,7 +13,12 @@ const EPOCHS = 16;
 const L2_COEFFICIENT = 1e-6;
 
 /** The rate used for the constant learning rate schedule */
-const LEARNING_RATE = 1e-3;
+const LEARNING_RATE = 1e-1;
+
+/** Element of an l2 normalized binary vector */
+export const l2Norm = (n: number): number => {
+  return n ** 0.5 / n;
+};
 
 /** Sparse binary ASGD classifier fitting function */
 export const fit = (samples: Sample[]): Float32Array => {
@@ -35,7 +40,7 @@ export const fit = (samples: Sample[]): Float32Array => {
       x.forEach((i) => {
         p += u[i];
       });
-      p /= alpha;
+      p *= l2Norm(x.size) / alpha;
 
       // Not part of the algorithm - used for monitoring training
       sumLoss += loss(p, y);
@@ -62,8 +67,6 @@ export const fit = (samples: Sample[]): Float32Array => {
       const rateOfAveraging = 1 / beta; // implied
       tau += rateOfAveraging * beta / alpha;
     }
-
-    console.table({ alpha, beta, tau });
 
     const averageLoss = (sumLoss / samples.length).toFixed(LOG_PRECISION);
     console.info(`Epoch ${epoch} - Average loss: ${averageLoss}`);
@@ -93,6 +96,7 @@ export const partialFit = (
     x.forEach((i) => {
       p += u[i];
     });
+    p *= l2Norm(x.size);
 
     // Not part of the algorithm - used for monitoring training
     sumLoss += loss(p, y);
