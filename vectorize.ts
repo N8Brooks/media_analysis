@@ -25,7 +25,8 @@ export const vectorize = (text: string): Set<number> => {
     if (token in STOP_WORDS) {
       continue;
     }
-    const i = hash(stem(token)) % N_FEATURES;
+    const base = stem(token);
+    const i = hash(base) % N_FEATURES;
     indices.add(i);
   }
   return indices;
