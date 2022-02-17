@@ -1,5 +1,9 @@
 // deno-lint-ignore-file
 
+/**
+ * This typescript package is copied from: https://github.com/localvoid/stemr
+ */
+
 const EXCEPTIONAL_FORMS4: { [k: string]: string } = {
   "skis": "ski",
   "idly": "idl",
