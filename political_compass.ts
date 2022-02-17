@@ -4,6 +4,7 @@ import { vectorize } from "./vectorize.ts";
 import { partialFit, predict, probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
 import { Prediction } from "./types.ts";
+import { paraTokenize } from "./para_tokenize.ts";
 
 /** Attributes for the parent SVG element */
 const POLITICAL_COMPASS_ATTRIBUTES = {
@@ -267,14 +268,16 @@ class PoliticalCompass extends HTMLElement {
   }
 
   /** Compute the political compass confidence region for an `Array` of texts */
-  computeConfidenceRegion(texts: string[]): void {
+  computeConfidenceRegion(...documents: string[]): void {
     if (!this.societyWeights || !this.economyWeights) {
       console.warn("One or both of the weights has not been set");
       return;
     }
 
+    const texts = paraTokenize(documents);
+
     // Remove ellipses and prediction mean
-    if (texts.length === 0) {
+    if (!texts.length) {
       console.warn("Cannot compute confidence with texts.length of 0");
       this.#confidenceRegion95.setAttribute("visibility", "hidden");
       this.#confidenceRegion80.setAttribute("visibility", "hidden");

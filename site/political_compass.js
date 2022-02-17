@@ -949,6 +949,21 @@ const marginOfError = (samples, alpha)=>{
     const marginOfError1 = tStatistic * standardError;
     return marginOfError1;
 };
+const MIN_PARA_CHAR_COUNT = 100;
+const paraTokenize = (documents)=>{
+    documents = documents.filter((p)=>p.length >= MIN_PARA_CHAR_COUNT
+    );
+    const multiNewlineParas = documents.flatMap((document)=>document.split("\n\n")
+    ).filter((p)=>p.length >= 100
+    );
+    if (!multiNewlineParas.length) {
+        return documents;
+    }
+    const singleNewlineParas = documents.flatMap((document)=>document.split("\n")
+    ).filter((p)=>p.length >= 100
+    );
+    return singleNewlineParas.length ? singleNewlineParas : multiNewlineParas;
+};
 const POLITICAL_COMPASS_ATTRIBUTES = {
     tabindex: "0",
     tagName: "svg",
@@ -1105,12 +1120,13 @@ class PoliticalCompass extends HTMLElement {
         politicalCompass1.addEventListener("keydown", this.#onKeyDown);
         return predictionMean;
     }
-    computeConfidenceRegion(texts) {
+    computeConfidenceRegion(...documents) {
         if (!this.societyWeights || !this.economyWeights) {
             console.warn("One or both of the weights has not been set");
             return;
         }
-        if (texts.length === 0) {
+        const texts = paraTokenize(documents);
+        if (!texts.length) {
             console.warn("Cannot compute confidence with texts.length of 0");
             this.#confidenceRegion95.setAttribute("visibility", "hidden");
             this.#confidenceRegion80.setAttribute("visibility", "hidden");
