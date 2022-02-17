@@ -655,34 +655,37 @@ const vectorize = (text)=>{
         if (token in STOP_WORDS) {
             continue;
         }
-        const i = hash(stem(token)) % N_FEATURES;
+        const base = stem(token);
+        const i = hash(base) % N_FEATURES;
         indices.add(i);
     }
     return indices;
 };
 const loss = (p, y)=>{
     const z = p * y;
-    if (z >= 1) {
-        return 0;
-    } else if (z >= -1) {
-        return (1 - z) * (1 - z);
+    if (z > 18) {
+        return Math.exp(-z);
+    } else if (z < -18) {
+        return -z;
     } else {
-        return -4 * z;
+        return Math.log(1 + Math.exp(-z));
     }
 };
 const dLoss = (p, y)=>{
     const z = p * y;
-    if (z >= 1) {
-        return 0;
-    } else if (z >= -1) {
-        return 2 * (1 - z) * -y;
+    if (z > 18) {
+        return Math.exp(-z) * -y;
+    } else if (z < -18) {
+        return -y;
     } else {
-        return -4 * y;
+        return -y / (1 + Math.exp(z));
     }
 };
-const LEARNING_RATE = 0.1;
 const l2Norm = (n)=>{
     return n ** 0.5 / n;
+};
+const alternateSign = (i)=>{
+    return 2 * (i & 1) - 1;
 };
 const partialFit = (samples, weights)=>{
     let beta = 0;
@@ -692,15 +695,17 @@ const partialFit = (samples, weights)=>{
     for (const { x , y , weight: weight1  } of samples){
         let p = 0;
         x.forEach((i)=>{
-            p += u[i];
+            p += u[i] * alternateSign(i);
         });
         p *= l2Norm(x.size);
         sumLoss += loss(p, y);
         beta++;
         const g = dLoss(p, y);
+        const constant = g * weight1;
         x.forEach((i)=>{
-            u[i] -= g * LEARNING_RATE * weight1;
-            uHat[i] += g * beta * LEARNING_RATE * weight1;
+            const sign = alternateSign(i);
+            u[i] -= constant * sign;
+            uHat[i] += constant * beta * sign;
         });
     }
     const averageLoss = (sumLoss / samples.length).toFixed(4);
@@ -720,7 +725,7 @@ function predict(x, weights) {
 const probability = (x, weights)=>{
     let prob = 0;
     x.forEach((i)=>{
-        prob += weights[i];
+        prob += weights[i] * alternateSign(i);
     });
     return Math.max(-1, Math.min(1, l2Norm(x.size) * prob));
 };
