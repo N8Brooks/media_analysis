@@ -288,3 +288,32 @@ training samples could further improve its accuracy. Additionally, given enough
 samples using other parameters for the vectorizer could be worthwhile.
 
 ![plot learning curve](images/learning_curve.png)
+
+## Update
+
+I've revisited the model to modify some parameters. I'll try to update these
+scripts and the rest of this readme to reflect that. The largest changes are
+with preprocessing. Underscores are replaced with spaces, digits are removed,
+stop words are removed, and other words are stemmed. This was to decrease the
+overall size of the vocabulary in the hopes that it would improve the recall of
+the model. When this was first implemented it was massively overconfident. About
+20% of results were at 100% and another 20% were at 0% when calculating
+probability for a class. The following hyperparameter changes were made to
+improve the calibration of the models.
+
+Hashing Vectorizer:
+
+- stop_words: <nltk's stop words with preprocessing applied>
+- token_pattern: None
+- n_features: 2**18
+- norm: l2 -it seems this helps when applying the model to texts of different
+  length.
+- alternate_sign: True
+
+SGD Classifier
+
+- loss: log - It seems that modified huber would occasionally calibrate the
+  model to be massively overconfident
+- learning_rate: optimal
+- alpha: 1e-4
+- eta0: unused with optimal learning rate

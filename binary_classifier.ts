@@ -7,17 +7,19 @@ import { Prediction, Sample } from "./types.ts";
 import { N_FEATURES } from "./constants.ts";
 
 /** Number of passes over the training samples */
-const EPOCHS = 16;
+const EPOCHS = 48;
 
-/** Multiplies the regularization term */
-const L2_COEFFICIENT = 1e-6;
-
-/** The rate used for the constant learning rate schedule */
-const LEARNING_RATE = 1e-1;
+/** Multiplies the regularization term, sklearn's alpha */
+const L2_COEFFICIENT = 1e-4;
 
 /** Element of an l2 normalized binary vector */
 export const l2Norm = (n: number): number => {
   return n ** 0.5 / n;
+};
+
+/** Alternate sign for a given index */
+export const alternateSign = (i: number): number => {
+  return 2 * (i & 1) - 1;
 };
 
 /** Sparse binary ASGD classifier fitting function */
@@ -38,18 +40,21 @@ export const fit = (samples: Sample[]): Float32Array => {
       // (1 / α[t - 1] * u[t - 1]^T * x[t])
       let p = 0;
       x.forEach((i) => {
-        p += u[i];
+        p += u[i] * alternateSign(i);
       });
       p *= l2Norm(x.size) / alpha;
 
       // Not part of the algorithm - used for monitoring training
       sumLoss += loss(p, y);
 
-      // α[t] = α[t - 1] / (1 - λ * γ[t])
-      alpha /= 1 - L2_COEFFICIENT * LEARNING_RATE * weight;
-
       // β[t] = β[t - 1] / (1 - η[t])
       beta++;
+
+      // approximate optimal learning rate
+      const learningRate = 1 / (L2_COEFFICIENT * beta);
+
+      // α[t] = α[t - 1] / (1 - λ * γ[t])
+      alpha /= 1 - L2_COEFFICIENT * learningRate * weight;
 
       // g[t] = L[s](p, y[t])
       // Since these are using binary feature vectors no vector multiplication is necessary
@@ -57,10 +62,11 @@ export const fit = (samples: Sample[]): Float32Array => {
 
       // u[t] = u[t - 1] - α[t] * γ[t] * g[t]
       // u_hat[t] = u_hat[t - 1] + α[t] * τ * γ[t] * g[t]
+      const constant = g * alpha * learningRate * weight;
       x.forEach((i) => {
-        u[i] -= g * alpha * LEARNING_RATE * weight;
-
-        uHat[i] += g * alpha * tau * LEARNING_RATE * weight;
+        const sign = alternateSign(i);
+        u[i] -= constant * sign;
+        uHat[i] += constant * tau * sign;
       });
 
       // τ[t] = τ[t - 1] + η[t] * β[t] / α[t]
@@ -81,7 +87,7 @@ export const partialFit = (
   samples: Sample[],
   weights: Float32Array,
 ): Float32Array => {
-  // Using `alpha = 1` and `tau = beta`
+  // Using `alpha = 1` and `tau = beta`, and `learningRate = 1`
   let beta = 0; // β[0] - samples processed
 
   // Copy weights for out-of-place update
@@ -94,7 +100,7 @@ export const partialFit = (
     // (1 / α[t - 1] * u[t - 1]^T * x[t])
     let p = 0;
     x.forEach((i) => {
-      p += u[i];
+      p += u[i] * alternateSign(i);
     });
     p *= l2Norm(x.size);
 
@@ -110,10 +116,11 @@ export const partialFit = (
 
     // u[t] = u[t - 1] - α[t] * γ[t] * g[t]
     // u_hat[t] = u_hat[t - 1] + α[t] * τ * γ[t] * g[t]
+    const constant = g * weight;
     x.forEach((i) => {
-      u[i] -= g * LEARNING_RATE * weight;
-
-      uHat[i] += g * beta * LEARNING_RATE * weight;
+      const sign = alternateSign(i);
+      u[i] -= constant * sign;
+      uHat[i] += constant * beta * sign;
     });
   }
 
@@ -147,7 +154,7 @@ export function predict(
 export const probability = (x: Set<number>, weights: Float32Array): number => {
   let prob = 0;
   x.forEach((i) => {
-    prob += weights[i];
+    prob += weights[i] * alternateSign(i);
   });
   return Math.max(-1, Math.min(1, l2Norm(x.size) * prob));
 };

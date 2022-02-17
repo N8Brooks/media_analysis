@@ -1,25 +1,23 @@
-// https://en.wikipedia.org/wiki/Huber_loss#Variant_for_classification
-
-/** Modified Huber loss for binary classification */
+/** Log loss for binary classification */
 export const loss = (p: number, y: number): number => {
   const z = p * y;
-  if (z >= 1) {
-    return 0;
-  } else if (z >= -1) {
-    return (1 - z) * (1 - z);
+  if (z > 18) {
+    return Math.exp(-z);
+  } else if (z < -18) {
+    return -z;
   } else {
-    return -4 * z;
+    return Math.log(1 + Math.exp(-z));
   }
 };
 
-/** Derivative Modified Huber loss for binary classification */
+/** Derivative log loss for binary classification */
 export const dLoss = (p: number, y: number): number => {
   const z = p * y;
-  if (z >= 1) {
-    return 0;
-  } else if (z >= -1) {
-    return 2 * (1 - z) * -y;
+  if (z > 18) {
+    return Math.exp(-z) * -y;
+  } else if (z < -18) {
+    return -y;
   } else {
-    return -4 * y;
+    return -y / (1 + Math.exp(z));
   }
 };
