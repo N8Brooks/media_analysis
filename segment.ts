@@ -1,4 +1,5 @@
-// Remove digits and anything touching them
+// Based on the unicode report of text segmentation: https://www.unicode.org/reports/tr29/#Sentence_Boundaries
+// With enough effort perhaps this could be a single `RegExp`
 
 const CR = "\\u{000D}";
 
