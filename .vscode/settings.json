@@ -6,6 +6,7 @@
   "editor.formatOnSave": true,
   "cSpell.words": [
     "ASGD",
+    "ATERM",
     "bigrams",
     "deno",
     "dtype",
@@ -16,14 +17,18 @@
     "numpy",
     "quantile",
     "quantiles",
+    "SATERM",
     "scikit",
+    "SCONTINUE",
     "sklearn",
+    "STERM",
     "tabindex",
     "testdata",
     "TFIDF",
     "tokenizes",
     "vectorize",
     "vectorizer",
-    "vectorizers"
+    "vectorizers",
+    "weightsupdate"
   ]
 }

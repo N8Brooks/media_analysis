@@ -5,7 +5,7 @@ import { hash } from "./hash.ts";
 import { stem } from "./stem.ts";
 
 /** Matches underscores, digits and diacritics */
-const TRANSFORM = /[_\d\p{Diacritic}]/gu;
+const TRANSFORM = /[_\p{Diacritic}]/gu;
 
 /** Designates what words are vectorized; hyphens and apostrophes are boundaries */
 const TOKEN = /\b\w\w+\b/gu;
