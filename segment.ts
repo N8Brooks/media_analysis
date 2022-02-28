@@ -60,6 +60,7 @@ const sb10 = new RegExp(SB10, "ug");
 const SB11 = `(?<=[${SATERM}][${CLOSE}]*${SP}*[${PARA_SEP}]?)`;
 const sb11 = new RegExp(SB11, "ug");
 
+/** Splits a document by sentence boundaries */
 export const segment = (document: string): string[] => {
   const boundaries: Set<number> = new Set();
 
