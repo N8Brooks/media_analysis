@@ -8,7 +8,7 @@ import { tokenize } from "./tokenize.ts";
   },
   {
     input: 'middle " quotes',
-    expected: "middle '' quotes",
+    expected: "middle `` quotes",
   },
   {
     input: 'ending quotes"',
@@ -16,7 +16,7 @@ import { tokenize } from "./tokenize.ts";
   },
   {
     input: 'bracket quotes ["',
-    expected: "bracket quotes [ ''",
+    expected: "bracket quotes [ ``",
   },
   {
     input: "elli...pses ...",

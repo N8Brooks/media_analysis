@@ -5,7 +5,7 @@ export const tokenize = (s: string): string[] => {
   // s=\([ ([{<]\)"=\1 `` =g
   // # close quotes handled at end
   s = s.replace(/^"/, "`` ");
-  s.replace(/([ ([{<])"/g, " $1 ");
+  s = s.replace(/([ ([{<])"/g, "$1 `` ");
 
   // s=\.\.\.= ... =g
   // s=[,;:@#$%&]= & =g
