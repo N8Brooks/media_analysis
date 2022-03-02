@@ -1,6 +1,8 @@
 import * as classifier from "./binary_classifier.ts";
-import { LOG_PRECISION } from "./constants.ts";
 import { Sample } from "./types.ts";
+
+/** Number of decimal points to show for floats in logs */
+export const LOG_PRECISION = 4;
 
 /** Used for metrics */
 export interface SensitivityAndSpecificity {
