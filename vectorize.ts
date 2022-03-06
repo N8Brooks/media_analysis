@@ -3,12 +3,16 @@
 // https://en.wikipedia.org/wiki/Feature_hashing
 
 import { N_FEATURES } from "./constants.ts";
-import { murmurHash3, stemmer } from "./deps.ts";
+import { EnglishStemmer, murmurHash3 } from "./deps.ts";
 import { preprocess } from "./preprocess.ts";
 import { STOP_WORDS } from "./stop_words.ts";
 import { textTile } from "./text_tile.ts";
 import { tokenize } from "./tokenize.ts";
 
+/** Penn Treebank stemmer instance */
+const stemmer = new EnglishStemmer();
+
+/** English sentence segmenter instance */
 const segmenter = new Intl.Segmenter("en", { granularity: "sentence" });
 
 /** Binary vectors of a `text`'s paragraphs */
