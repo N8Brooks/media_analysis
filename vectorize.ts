@@ -1,16 +1,12 @@
 // https://en.wikipedia.org/wiki/Feature_hashing
 
-import { N_FEATURES, STOP_WORDS } from "./constants.ts";
-import { EnglishStemmer, murmurHash3 } from "./deps.ts";
+import { N_FEATURES } from "./constants.ts";
+import { murmurHash3, stemmer } from "./deps.ts";
+import { STOP_WORDS } from "./stop_words.ts";
+import { tokenize } from "./tokenize.ts";
 
 /** Matches underscores, digits and diacritics */
 const TRANSFORM = /[_\p{Diacritic}]/gu;
-
-/** Designates what words are vectorized; hyphens and apostrophes are boundaries */
-const TOKEN = /\b\w\w+\b/gu;
-
-/** Snowball stemming instance */
-const stemmer = new EnglishStemmer();
 
 /** Lower cases, removes accents, joins split words, and replaces underscores with spaces */
 export const preprocess = (text: string): string => {
@@ -23,7 +19,7 @@ export const preprocess = (text: string): string => {
 /** Sparse indices of a text's uncased, hashed monograms with no stop words */
 export const vectorize = (text: string): Set<number> => {
   const indices: Set<number> = new Set();
-  for (const [token] of preprocess(text).matchAll(TOKEN)) {
+  for (const token of tokenize(preprocess(text))) {
     if (token in STOP_WORDS) {
       continue;
     }
