@@ -1,31 +1,28 @@
+/// <reference types="./segmenter.d.ts" />
+
 // https://en.wikipedia.org/wiki/Feature_hashing
 
 import { N_FEATURES } from "./constants.ts";
 import { murmurHash3, stemmer } from "./deps.ts";
+import { preprocess } from "./preprocess.ts";
 import { STOP_WORDS } from "./stop_words.ts";
+import { textTile } from "./text_tile.ts";
 import { tokenize } from "./tokenize.ts";
 
-/** Matches underscores, digits and diacritics */
-const TRANSFORM = /[_\p{Diacritic}]/gu;
+const segmenter = new Intl.Segmenter("en", { granularity: "sentence" });
 
-/** Lower cases, removes accents, joins split words, and replaces underscores with spaces */
-export const preprocess = (text: string): string => {
-  return text
-    .toLowerCase()
-    .normalize("NFKD")
-    .replace(TRANSFORM, (char) => char === "_" ? " " : "");
-};
-
-/** Sparse indices of a text's uncased, hashed monograms with no stop words */
-export const vectorize = (text: string): Set<number> => {
-  const indices: Set<number> = new Set();
-  for (const token of tokenize(preprocess(text))) {
-    if (token in STOP_WORDS) {
-      continue;
-    }
-    const base = stemmer.stem(token);
-    const i = murmurHash3(base) % N_FEATURES;
-    indices.add(i);
-  }
-  return indices;
+/** Binary vectors of a `text`'s paragraphs */
+export const vectorize = (text: string): Set<number>[] => {
+  const sentences = [...segmenter.segment(text)]
+    .map(({ segment }) => {
+      const sentence = preprocess(segment);
+      const words = tokenize(sentence)
+        .filter((word) => !(word in STOP_WORDS))
+        .map((word) => stemmer.stem(word));
+      return words;
+    });
+  return textTile(sentences)
+    .map((paragraph) =>
+      new Set(paragraph.map((word) => murmurHash3(word) % N_FEATURES))
+    );
 };

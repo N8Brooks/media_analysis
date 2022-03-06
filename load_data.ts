@@ -5,15 +5,27 @@ import { Prediction, Sample } from "./types.ts";
 /** A row of a CSV file */
 type Row = Record<string, string>;
 
+/** Union of given sets */
+const union = <T>(sets: Set<T>[]) => {
+  const u: Set<T> = new Set();
+  for (const set of sets) {
+    set.forEach((i) => {
+      u.add(i);
+    });
+  }
+  return u;
+};
+
 /** Parses a record from the dataset */
 export const parseRecord = ({ question, text, target }: Row): Sample => {
   if (target !== "-1" && target !== "1") {
     throw new RangeError(`Target ${target} is not -1 or 1`);
   }
+  const vector = union(vectorize(text));
   return {
-    x: vectorize(text),
+    x: vector,
     y: +target as Prediction,
-    weight: +question, // temp
+    weight: +question,
   };
 };
 
