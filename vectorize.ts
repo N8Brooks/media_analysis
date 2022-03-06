@@ -1,8 +1,7 @@
 // https://en.wikipedia.org/wiki/Feature_hashing
 
 import { N_FEATURES, STOP_WORDS } from "./constants.ts";
-import { hash } from "./hash.ts";
-import { EnglishStemmer } from "./deps.ts";
+import { EnglishStemmer, murmurHash3 } from "./deps.ts";
 
 /** Matches underscores, digits and diacritics */
 const TRANSFORM = /[_\p{Diacritic}]/gu;
@@ -29,7 +28,7 @@ export const vectorize = (text: string): Set<number> => {
       continue;
     }
     const base = stemmer.stem(token);
-    const i = hash(base) % N_FEATURES;
+    const i = murmurHash3(base) % N_FEATURES;
     indices.add(i);
   }
   return indices;
