@@ -2,13 +2,16 @@
 
 import { N_FEATURES, STOP_WORDS } from "./constants.ts";
 import { hash } from "./hash.ts";
-import { stem } from "./stem.ts";
+import { EnglishStemmer } from "./deps.ts";
 
 /** Matches underscores, digits and diacritics */
 const TRANSFORM = /[_\p{Diacritic}]/gu;
 
 /** Designates what words are vectorized; hyphens and apostrophes are boundaries */
 const TOKEN = /\b\w\w+\b/gu;
+
+/** Snowball stemming instance */
+const stemmer = new EnglishStemmer();
 
 /** Lower cases, removes accents, joins split words, and replaces underscores with spaces */
 export const preprocess = (text: string): string => {
@@ -25,7 +28,7 @@ export const vectorize = (text: string): Set<number> => {
     if (token in STOP_WORDS) {
       continue;
     }
-    const base = stem(token);
+    const base = stemmer.stem(token);
     const i = hash(base) % N_FEATURES;
     indices.add(i);
   }
