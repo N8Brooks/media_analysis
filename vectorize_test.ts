@@ -1,7 +1,7 @@
 import { assertEquals, assertStrictEquals } from "./test_deps.ts";
-import { hash } from "./hash.ts";
 import { N_FEATURES } from "./constants.ts";
 import { preprocess, vectorize } from "./vectorize.ts";
+import { murmurHash3 } from "./deps.ts";
 
 /** Several accent unique and accent redundant letters */
 const ACCENTUATED = "àßÇÐéFgîõü";
@@ -32,7 +32,7 @@ Deno.test("sentence", () => {
   const actual = vectorize(text);
   const expected = new Set();
   WORDS.forEach((word) => {
-    const i = hash(word) % N_FEATURES;
+    const i = murmurHash3(word) % N_FEATURES;
     expected.add(i);
   });
   assertEquals(actual, expected);
