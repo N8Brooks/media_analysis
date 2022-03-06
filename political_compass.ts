@@ -4,7 +4,6 @@ import { vectorize } from "./vectorize.ts";
 import { partialFit, predict, probability } from "./binary_classifier.ts";
 import { marginOfError, mean } from "./statistics.ts";
 import { Prediction } from "./types.ts";
-import { paraTokenize } from "./para_tokenize.ts";
 
 /** Attributes for the parent SVG element */
 const POLITICAL_COMPASS_ATTRIBUTES = {
