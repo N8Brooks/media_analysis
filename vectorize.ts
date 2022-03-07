@@ -16,16 +16,18 @@ const segmenter = new Intl.Segmenter("en", { granularity: "sentence" });
 
 /** Binary vectors of a `text`'s paragraphs */
 export const vectorize = (text: string): Set<number>[] => {
-  return [...segmenter.segment(text)].map(({ segment }) => {
-    const vector: Set<number> = new Set();
-    for (const word of tokenize(preprocess(segment))) {
-      if (word in STOP_WORDS) {
-        continue;
+  return [...segmenter.segment(text)]
+    .map(({ segment }) => {
+      const vector: Set<number> = new Set();
+      for (const word of tokenize(preprocess(segment))) {
+        if (word in STOP_WORDS) {
+          continue;
+        }
+        const base = stemmer.stem(word);
+        const index = murmurHash3(base) % N_FEATURES;
+        vector.add(index);
       }
-      const base = stemmer.stem(word);
-      const index = murmurHash3(base) % N_FEATURES;
-      vector.add(index);
-    }
-    return vector;
-  });
+      return vector;
+    })
+    .filter((vector) => vector.size);
 };

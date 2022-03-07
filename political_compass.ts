@@ -267,17 +267,14 @@ class PoliticalCompass extends HTMLElement {
   }
 
   /** Compute the political compass confidence region for an `Array` of texts */
-  computeConfidenceRegion(...documents: string[]): void {
-    // TODO: this should take a single document only
-
+  computeConfidenceRegion(document: string): void {
     if (!this.societyWeights || !this.economyWeights) {
       console.warn("One or both of the weights has not been set");
       return;
     }
 
-    this.#sampleFeatureVectors = documents.flatMap((text) => vectorize(text));
-
     // Remove ellipses and prediction mean
+    this.#sampleFeatureVectors = vectorize(document);
     if (this.#sampleFeatureVectors.length < 2) {
       console.warn("Cannot compute confidence with texts.length of 0");
       this.#confidenceRegion95.setAttribute("visibility", "hidden");
