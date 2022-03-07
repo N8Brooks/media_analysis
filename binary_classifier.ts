@@ -7,7 +7,7 @@ import { Prediction, Sample } from "./types.ts";
 import { N_FEATURES } from "./constants.ts";
 
 /** Number of passes over the training samples */
-const EPOCHS = 48;
+const EPOCHS = 100;
 
 /** Multiplies the regularization term, sklearn's alpha */
 const L2_COEFFICIENT = 1e-4;
